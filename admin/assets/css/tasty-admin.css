@@ -1,0 +1,9 @@
+.tasty-custom-meta-field label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.tasty-custom-meta-field {
+    margin-bottom: 25px;
+}
