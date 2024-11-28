@@ -30,6 +30,7 @@ class Tasty_Activator {
      * @since   1.0.0
      */
     public static function activate() {
-
+        //Create database tables during plugin activation
+        Tasty_Database_Tables::create_tables();
     }
 }

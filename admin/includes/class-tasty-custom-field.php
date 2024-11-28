@@ -232,26 +232,4 @@ class Tasty_Custom_Meta_Field{
         return $content;
     }
 
-    /**
-     * Get all custom taxonomy list
-     * We will use this function to get all custom taxonomy name to add custom meta in every taxonomy
-     * 
-     * @deprecated  This method has no use for now. It may use for future
-     * 
-     * @since   1.0.0
-     * @access  public
-     */
-    public function get_all_tasty_taxonomy(){
-
-        //get all taxonomies
-        $all_taxonomies = get_taxonomies( [], 'objects' );
-
-        //Get only custom taxonomies
-        $custom_taxonomies = array_filter( $all_taxonomies, function( $taxonomy ){
-            return !$taxonomy->_builtin; //exclude built-in taxonomy
-        } );
-
-        return array_map( function( $taxonomy ){ return $taxonomy->name; }, $custom_taxonomies );
-    }
-
 }

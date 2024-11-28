@@ -109,6 +109,12 @@ class Tasty {
         //The class responsible for defining internationalization functionality of the plugin
         require_once TASTY_DIR . 'includes/class-tasty-i18n.php';
 
+		//The class responsible for load all herlper method that uses all over the tasty file
+		require_once TASTY_DIR	. 'includes/class-tasty-helper.php';
+
+		//The class responsible for creating necessary database table for tasty
+		require_once TASTY_DIR . 'includes/class-tasty-database.php';
+
 		// The class responsible for defining all actions that occur in the admin area
 		require_once TASTY_DIR . 'admin/class-tasty-admin.php';
 
@@ -138,12 +144,11 @@ class Tasty {
 	 * @access	private
 	 */
 	private function define_admin_hooks(){
-
+		
 		$tasty_admin 		= new Tasty_Admin( $this->get_plugin_name(), $this->get_version() );
 		$tasty_taxonomy 	= new Tasty_Taxonomies();
 		$tasty_custom_field = new Tasty_Custom_Meta_Field();
 		
-
 		$this->loader->add_action( 'admin_enqueue_scripts', $tasty_admin, 'enqueue_admin_scripts' );
 		$this->loader->add_action( 'init', $tasty_taxonomy, 'custom_taxonomies', 10 );
 		$this->loader->add_action( 'add_meta_boxes', $tasty_custom_field, 'custom_meta_box' );
