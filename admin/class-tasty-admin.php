@@ -78,6 +78,7 @@ class Tasty_Admin{
     private function load_dependencies(){
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-taxonomy.php';
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-custom-field.php';
+        require_once TASTY_ADMIN_DIR . 'includes/class-tasty-api-endpoint.php';
     }
 
 }

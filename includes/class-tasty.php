@@ -148,11 +148,14 @@ class Tasty {
 		$tasty_admin 		= new Tasty_Admin( $this->get_plugin_name(), $this->get_version() );
 		$tasty_taxonomy 	= new Tasty_Taxonomies();
 		$tasty_custom_field = new Tasty_Custom_Meta_Field();
+		$tasty_API          = new Tasty_API_Endpoint();
 		
 		$this->loader->add_action( 'admin_enqueue_scripts', $tasty_admin, 'enqueue_admin_scripts' );
 		$this->loader->add_action( 'init', $tasty_taxonomy, 'custom_taxonomies', 10 );
 		$this->loader->add_action( 'add_meta_boxes', $tasty_custom_field, 'custom_meta_box' );
 		$this->loader->add_action( 'save_post', $tasty_custom_field, 'save_custom_post_meta' );
+
+		$this->loader->add_action( 'rest_api_init', $tasty_API, 'register_tasty_route' );
 
 		/**
 		 * add custom field to custom taxnomy

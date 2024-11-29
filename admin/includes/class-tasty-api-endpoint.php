@@ -51,6 +51,26 @@ class Tasty_API_Endpoint{
             ),
             'permission_callback' => '__return_true'
         ) );
+
+        register_rest_route( 'tasty/v1', 'save_choices', array(
+            'methods'  => 'POST',
+            'callback' => array( $this, 'save_user_choices' ),
+            'args'     => array(
+                'app_user' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'absint'
+                ),
+                'post_id'  => array(
+                    'required' => true,
+                    'sanitize_callback' => 'absint'
+                ),
+                'choice'   => array(
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field'
+                )
+            ),
+            'permission_callback' => '__return_true'
+        ) );
     }
 
     /**
@@ -69,9 +89,9 @@ class Tasty_API_Endpoint{
         $app_user_id = !empty( $rquest['app_user_id'] ) ? $rquest['app_user_id'] : false;
         $swiped_ids  = $rquest['swiped_ids'];
 
-        if ( ! $user_id && ! $app_user_id ) {
-            return new WP_REST_Response( [ 'message' => 'User not identified.' ], 400 );
-        }
+        // if ( ! $user_id && ! $app_user_id ) {
+        //     return new WP_REST_Response( [ 'message' => 'User not identified.' ], 400 );
+        // }
 
         // Fetch swiped posts for the user
         $column_name       = $user_id ? 'user_id' : 'app_user_id';
@@ -87,7 +107,7 @@ class Tasty_API_Endpoint{
         //Fetch taxonomy terms for liked and disliked post
         $liked_terms       = [];
         $disliked_terms    = [];
-        $tasty_tags        = Helper::get_tasty_tags();
+        $tasty_tags        = Tasty_Helper::get_tasty_tags();
 
         if( is_array( $tasty_tags ) ){
             foreach( $tasty_tags as $tag ){
@@ -242,6 +262,15 @@ class Tasty_API_Endpoint{
         // Merge provided IDs and latest IDs
         return array_unique( array_merge( $provided_ids, $latest_ids ) );
     }
+
+    /**
+     * Save user choices
+     * Store user choices in database
+     * 
+     * @param   int     $app_user_id    If user in not loggedin app user id will be required
+     * @param   int     $post_id        Post ID of the swiped image
+     * @param   string  $choice         User choice 
+     */
     
 
 }
