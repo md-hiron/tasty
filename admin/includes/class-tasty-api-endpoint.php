@@ -24,7 +24,7 @@ if( ! defined( 'WPINC' ) ){
 class Tasty_API_Endpoint{
 
     private $user_choices_table = 'user_choices';
-    private $app_users_table    = 'user_choices';
+    private $app_users_table    = 'app_users';
 
     /**
      * Register rest route for tatsy
@@ -56,10 +56,6 @@ class Tasty_API_Endpoint{
             'methods'  => 'POST',
             'callback' => array( $this, 'save_user_choices' ),
             'args'     => array(
-                'app_user' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'absint'
-                ),
                 'post_id'  => array(
                     'required' => true,
                     'sanitize_callback' => 'absint'
@@ -267,10 +263,91 @@ class Tasty_API_Endpoint{
      * Save user choices
      * Store user choices in database
      * 
-     * @param   int     $app_user_id    If user in not loggedin app user id will be required
-     * @param   int     $post_id        Post ID of the swiped image
-     * @param   string  $choice         User choice 
+     * @param   array     $request    Requested parameter
+     * 
+     * @since   1.0.0
+     * @access  public
      */
+    public function save_user_choices( $request ){
+
+        global $wpdb;
+
+        $user_id     = get_current_user_id();
+        $session_id  = isset( $_COOKIE['app_user_session'] ) ? sanitize_text_field( $_COOKIE['app_user_session'] ) : null;
+        $app_user_id = null;
+
+        if( ! $user_id ){
+            if( ! $session_id ){
+                $session_id = uniqid( 'app_user_', true );
+
+                //insert a new app user into the datatable
+                $wpdb->insert(
+                    $wpdb->prefix . $this->app_users_table,
+                    array(
+                        'email'         => $session_id . '@michaelgorski.de',
+                        'session_id'    => $session_id,
+                        'last_activity' => current_time( 'mysql' )
+                    ),
+                    array( '%s', '%s', '%s' )
+                );
+
+                //get the inserted app user id
+                $app_user_id = $wpdb->insert_id;
+
+                //Set the session ID as a cookie that expires in 30days
+
+                setcookie( 'app_user_session', $session_id, time() + ( 30 * DAY_IN_SECONDS ), COOKIEPATH, COOKIE_DOMAIN );
+            }else{
+                $app_user_id = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT id FROM {$wpdb->prefix}{$this->app_users_table} WHERE session_id = %s",
+                        $session_id
+                    )
+                );
+            }
+        }
+
+        // get post ID and choice from parameter request
+        $post_id     = !empty( $request['post_id'] ) ? absint( $request['post_id'] ) : null;
+        $choice      = !empty( $request['choice'] ) ? sanitize_text_field( $request['choice'] ) : null;
+
+        //Validate choices
+        if( in_array( $choice, array( 'like', 'dislike' ) ) || !$post_id ){
+            return new WP_REST_Response( array( 'message' => 'Invalid Parameters' ), 400 );
+        }
+
+        //validate user
+        if( ! $user_id || ! $app_user_id ){
+            return new WP_REST_Response( array( 'message' => 'User not indentified' ), 400 );
+        }
+
+        //Insert or update user choices data in the database
+        $wpdb->replace(
+            $wpdb->prefix . $this->user_choices_table,
+            array(
+                'user_id'       => $user_id ?: null,
+                'app_user_id'   => $app_user_id,
+                'post_id'       => $post_id,
+                'choice'        => $choice,
+                'time'          => current_time( 'mysql' )
+            ),
+            array(
+                '%d',
+                '%d',
+                '%d',
+                '%s',
+                '%s',
+            )
+        );
+
+        return new WP_REST_Response( array( 
+            'choice_success' => true, 
+            'user_id'        => $user_id, 
+            'app_user_id'    => $app_user_id, 
+            'message', 'User choice recorded' 
+        ), 200 );
+
+    }
     
 
 }
