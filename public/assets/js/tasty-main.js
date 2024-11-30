@@ -1,11 +1,13 @@
 // Configuration
 const siteUrl            = window.location.origin;
-const apiEndpoint        = siteUrl + '/tasty/wp-json/tasty/v1/get-tasty-posts';
+const getPostEndPoint    = siteUrl + '/tasty/wp-json/tasty/v1/get-tasty-posts';
+const saveChoiceEndPoint = siteUrl + '/tasty/wp-json/tasty/v1/save_choices';
 const frameSelector      = '.frame';
 const likeButtonSelector = '#like';
 const hateButtonSelector = '#hate';
 
-// State variables
+// Global variables
+const frame = document.querySelector(frameSelector); // Defined globally
 let data = [];
 let current = null;
 let likeText = null;
@@ -13,35 +15,38 @@ let startX = 0;
 let startY = 0;
 let moveX = 0;
 let moveY = 0;
-let cardIndex = 0;
 const storeAction = { likes: [], dislikes: [] };
 
-// Initialize
+// Initialize the system
 function initSwipeCards() {
-    const frame = document.querySelector(frameSelector);
     const likeButton = document.querySelector(likeButtonSelector);
     const hateButton = document.querySelector(hateButtonSelector);
 
     fetchInitialData()
         .then(fetchedData => {
             data = fetchedData;
-            data.forEach(item => appendCard(item, frame));
+            data.forEach(item => appendCard(item));
 
             // Set the initial card
             current = frame.querySelector('.card:last-child');
             likeText = current?.children[0];
-            initCard(current, frame);
+            attachCardEventListeners(current);
         })
         .catch(error => console.error('Error loading initial data:', error));
 
-    likeButton.addEventListener('click', () => likeHandler(frame));
-    hateButton.addEventListener('click', () => hateHandler(frame));
+    likeButton.addEventListener('click', () => likeHandler('like'));
+    hateButton.addEventListener('click', () => hateHandler('dislike'));
 }
 
 // Fetch initial data
 async function fetchInitialData() {
     try {
-        const response = await fetch(apiEndpoint);
+        const response = await fetch(getPostEndPoint, {
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce 
+            },
+            credentials: 'include'
+        });
         return response.ok ? await response.json() : [];
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -50,11 +55,11 @@ async function fetchInitialData() {
 }
 
 // Append a card to the frame
-function appendCard(cardData, frame) {
+function appendCard(cardData) {
     const firstCard = frame.children[0];
     const newCard = document.createElement('div');
-    newCard.setAttribute('data-post-id', cardData.id);
     newCard.className = 'card';
+    newCard.setAttribute('data-post-id', cardData.id);
     newCard.style.backgroundImage = `url(${cardData.featured_image})`;
     newCard.innerHTML = `
         <div class="is-like"></div>
@@ -68,20 +73,21 @@ function appendCard(cardData, frame) {
     else frame.appendChild(newCard);
 }
 
-// Initialize card for interaction
-function initCard(card, frame) {
+// Attach event listeners to a card
+function attachCardEventListeners(card) {
     if (card) {
-        card.addEventListener('pointerdown', (e) => onPointerDown(e, frame));
+        card.addEventListener('pointerdown', onPointerDown);
     }
 }
 
 // Pointer down event handler
-function onPointerDown({ clientX, clientY }, frame) {
+function onPointerDown({ clientX, clientY }) {
     startX = clientX;
     startY = clientY;
+
     current.addEventListener('pointermove', onPointerMove);
-    current.addEventListener('pointerup', () => onPointerUp(frame));
-    current.addEventListener('pointerleave', () => onPointerUp(frame));
+    current.addEventListener('pointerup', onPointerUp);
+    current.addEventListener('pointerleave', onPointerUp);
 }
 
 // Pointer move event handler
@@ -92,46 +98,48 @@ function onPointerMove({ clientX, clientY }) {
 }
 
 // Pointer up event handler
-function onPointerUp(frame) {
+function onPointerUp() {
     current.removeEventListener('pointermove', onPointerMove);
-    current.removeEventListener('pointerup', () => onPointerUp(frame));
-    current.removeEventListener('pointerleave', () => onPointerUp(frame));
+    current.removeEventListener('pointerup', onPointerUp);
+    current.removeEventListener('pointerleave', onPointerUp);
 
     if (Math.abs(moveX) > frame.clientWidth / 7) {
-        current.removeEventListener('pointerdown', (e) => onPointerDown(e, frame));
-        completeAction(frame);
+        // Swipe threshold reached, complete the action
+        current.removeEventListener('pointerdown', onPointerDown);
+        const action = moveX > 0 ? 'like' : 'dislike';
+        completeAction( action );
     } else {
+        // Cancel the swipe if threshold not reached
         cancelAction();
     }
 }
 
 // Set card transformation
-function setTransform(x, y, deg, duration = 100, isButtonClick = false) {
-    const isMobile = innerWidth <= 768;
+function setTransform(x, y, deg, duration, isButtonClick = false) {
     current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${deg}deg)`;
-    likeText.style.opacity = isMobile && isButtonClick ? 1 : Math.abs((x / innerWidth) * 2.1);
+    likeText.style.opacity = innerWidth <= 768 && isButtonClick ? 1 : Math.abs(x / innerWidth) * 2.1;
     likeText.className = `is-like ${x > 0 ? 'like' : 'nope'}`;
-    current.style.transition = isMobile && isButtonClick ? `transform 300ms` : `transform ${duration}ms`;
+
+    if (duration) current.style.transition =  innerWidth <= 768 && isButtonClick ? `transform 300ms` : `transform ${duration}ms`
 }
 
-// Complete an action
-async function completeAction(frame) {
-    const flyMultiplier = innerWidth <= 768 ? 1.5 : 1.3;
+// Complete the swipe action
+function completeAction( action, isButtonClick = false ) {
+    const flyMultiplier = innerWidth <= 768 ? 1.5 : 1.7;
     const flyX = (Math.abs(moveX) / moveX) * innerWidth * flyMultiplier;
     const flyY = (moveY / moveX) * flyX;
 
-    setTransform(flyX, flyY, flyX / innerWidth * 50, innerWidth);
-
-    if (current) {
-        if (moveX > 0) handleLike(data[cardIndex]);
-        else handleDislike(data[cardIndex]);
-    }
+    setTransform(flyX, flyY, flyX / innerWidth * 50, innerWidth, isButtonClick);
 
     const prev = current;
     const next = current.previousElementSibling;
+    console.log(data[data.length - frame.children.length].id);
+    console.log(action);
+
+    saveChoiceToDatabase( data[data.length - frame.children.length].id, action );
 
     if (next) {
-        initCard(next, frame);
+        attachCardEventListeners(next);
         current = next;
         likeText = current.children[0];
     } else {
@@ -141,64 +149,83 @@ async function completeAction(frame) {
 
     setTimeout(() => {
         frame.removeChild(prev);
-        if (!current) displayNoMoreCardsMessage(frame);
-    }, innerWidth);
+        if (!current) displayNoMoreCardsMessage();
+    }, 300);
 
-    // Fetch more cards if needed
-    if (data.length - cardIndex <= 3) {
-        const newData = await fetchInitialData();
-        newData.forEach(item => appendCard(item, frame));
-        data.push(...newData);
+    // Fetch more cards if necessary
+    if (data.length - storeAction.likes.length - storeAction.dislikes.length <= 3) {
+        fetchInitialData().then(newData => {
+            newData.forEach(item => appendCard(item));
+            data.push(...newData);
+        });
     }
 }
 
-// Cancel an action
+//save user choice in database
+async function saveChoiceToDatabase( postID, action ){
+    console.log({ post_id: postID, choice: action });
+    console.log('nonce '+wpApiSettings.nonce);
+    try{
+        const response = await fetch( saveChoiceEndPoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': wpApiSettings.nonce 
+            },
+            credentials: 'include',
+            body: JSON.stringify({ post_id: postID, choice: action })
+        } );
+
+        if( !response.ok ){
+            throw new Error( 'Failed to save user choice to database' );
+        }
+
+        const result = await response.json();
+        console.log(result);
+    }catch( error ){
+        throw new Error( error );
+    }
+}
+
+// Cancel the swipe action
 function cancelAction() {
     setTransform(0, 0, 0);
-    setTimeout(() => (current.style.transition = ''), 100);
-}
-
-// Handle like
-function handleLike(cardData) {
-    console.log('Liked:', cardData);
-    storeAction.likes.push(cardData.name);
-}
-
-// Handle dislike
-function handleDislike(cardData) {
-    console.log('Disliked:', cardData);
-    storeAction.dislikes.push(cardData.name);
+    setTimeout(() => {
+        current.style.transition = '';
+    }, 100);
 }
 
 // Like button handler
-function likeHandler(frame) {
-    likeText.style.opacity = 1;
-    likeText.className = 'is-like like';
-    setTimeout(() => {
+function likeHandler(action) {
+    likeText.style.opacity = 1
+    likeText.className = 'is-like like'
+    setTimeout( function(){
         moveX = 1;
         moveY = 0;
-        completeAction(frame);
-    }, 200);
+        completeAction( action, true ); 
+    }, 300)
 }
 
 // Hate button handler
-function hateHandler(frame) {
-    likeText.style.opacity = 1;
-    likeText.className = 'is-like nope';
-    setTimeout(() => {
-        moveX = -1;
-        moveY = 0;
-        completeAction(frame);
-    }, 150);
+function hateHandler(action) {
+
+    likeText.style.opacity = 1
+    likeText.className = 'is-like nope'
+    setTimeout( function(){
+        moveX = -1
+        moveY = 0
+        completeAction( action, true ); 
+    }, 300)
+
 }
 
-// Display a message when no more cards are available
-function displayNoMoreCardsMessage(frame) {
+// Display "No More Cards" message
+function displayNoMoreCardsMessage() {
     const message = document.createElement('div');
     message.className = 'card no-more-cards';
     message.innerHTML = '<div class="no-more-item">No more cards available</div>';
     frame.appendChild(message);
 }
 
-// Initialize the swipe cards system
+// Initialize the swipe card system
 initSwipeCards();

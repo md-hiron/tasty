@@ -70,6 +70,10 @@ class Tasty_Public{
     public function enqueue_public_scripts(){
         wp_enqueue_style( $this->plugin_name .'-main', TASTY_PUBLIC_URL . 'assets/css/tasty-main.css', array(), time() );
         wp_enqueue_script( $this->plugin_name .'-main', TASTY_PUBLIC_URL . 'assets/js/tasty-main.js', array(), time(), true );
+
+        wp_localize_script( $this->plugin_name .'-main', 'wpApiSettings', array(
+            'nonce' => wp_create_nonce('wp_rest')
+        ));
     }
 
     /**

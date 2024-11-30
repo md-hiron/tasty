@@ -80,9 +80,23 @@ class Tasty_API_Endpoint{
      * @access  public
      */
     public function get_tasty_posts( $rquest ){
-        
+        global $wpdb;
         $user_id     = get_current_user_id();
-        $app_user_id = !empty( $rquest['app_user_id'] ) ? $rquest['app_user_id'] : false;
+
+        $session_id  = isset( $_COOKIE['app_user_session'] ) ? sanitize_text_field( $_COOKIE['app_user_session'] ) : null;
+        $app_user_id = null;
+
+        if( !$user_id ){
+            if( $session_id ){
+                $app_user_id = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT id FROM {$wpdb->prefix}{$this->app_users_table} WHERE session_id = %s",
+                        $session_id
+                    )
+                );
+            }
+        }
+
         $swiped_ids  = $rquest['swiped_ids'];
 
         // if ( ! $user_id && ! $app_user_id ) {
@@ -180,7 +194,7 @@ class Tasty_API_Endpoint{
      */
     private function chose_post_ids( $user_identifier, $column_name ){
 
-        if( empty( $user_identifier ) || $column_name ){
+        if( ! $user_identifier  || ! $column_name ){
             return array();
         }
 
@@ -311,15 +325,16 @@ class Tasty_API_Endpoint{
         $post_id     = !empty( $request['post_id'] ) ? absint( $request['post_id'] ) : null;
         $choice      = !empty( $request['choice'] ) ? sanitize_text_field( $request['choice'] ) : null;
 
+        if ( ! $user_id && ! $app_user_id ) {
+            return new WP_REST_Response( [ 'message' => 'User not identified.' ], 400 );
+        }
+
         //Validate choices
-        if( in_array( $choice, array( 'like', 'dislike' ) ) || !$post_id ){
+        if( ! in_array( $choice, array( 'like', 'dislike' ) ) || !$post_id ){
             return new WP_REST_Response( array( 'message' => 'Invalid Parameters' ), 400 );
         }
 
-        //validate user
-        if( ! $user_id || ! $app_user_id ){
-            return new WP_REST_Response( array( 'message' => 'User not indentified' ), 400 );
-        }
+        
 
         //Insert or update user choices data in the database
         $wpdb->replace(
