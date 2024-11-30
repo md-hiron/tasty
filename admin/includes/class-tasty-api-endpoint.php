@@ -261,7 +261,7 @@ class Tasty_API_Endpoint{
 
     /**
      * Save user choices
-     * Store user choices in database
+     * Store user choices in database. This method also create app user on first swip if user is not logged in
      * 
      * @param   array     $request    Requested parameter
      * 

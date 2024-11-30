@@ -90,6 +90,9 @@ class Tasty {
 		//Load all hooks from admin
 		$this->define_admin_hooks();
 
+		//Load all hooks from public
+		$this->define_public_hooks();
+
     }
 
     /**
@@ -118,6 +121,9 @@ class Tasty {
 		// The class responsible for defining all actions that occur in the admin area
 		require_once TASTY_DIR . 'admin/class-tasty-admin.php';
 
+		// The class responsible for defining all actions that occur in the public area
+		require_once TASTY_DIR . 'public/class-tasty-public.php';
+
         
     }
 
@@ -138,7 +144,7 @@ class Tasty {
     }
 
 	/**
-	 * Register all of the hooks relatedto the admin area functionality of this plugin
+	 * Register all of the hooks related to the admin area functionality of this plugin
 	 * 
 	 * @since	1.0.0
 	 * @access	private
@@ -259,6 +265,24 @@ class Tasty {
 		$this->loader->add_filter( 'manage_usage_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 		$this->loader->add_filter( 'manage_functionality_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 	}
+
+	/**
+	 * Define public hooks
+	 * Register all of the hooks related to the public area functionality of this plugin
+	 * 
+	 * @since	1.0.0
+	 * @access	public
+	 */
+	private function define_public_hooks(){
+		$tasty_public        = new Tasty_Public( $this->get_plugin_name(), $this->get_version() );
+		$tasty_page_template = new Tasty_Page_Template();
+
+		$this->loader->add_action( 'wp_enqueue_scripts', $tasty_public, 'enqueue_public_scripts' );
+		$this->loader->add_filter( 'theme_page_templates', $tasty_page_template, 'add_page_template' );
+		$this->loader->add_filter( 'template_include', $tasty_page_template, 'load_tasty_template' );
+
+	}
+
 
     /**
      * Run the loader to execute all of the hooks with WordPress

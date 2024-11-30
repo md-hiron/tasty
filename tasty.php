@@ -30,8 +30,14 @@ define( 'TASTY_VERSION', '1.0.0' );
 //Define paths for the sitemap files
 define( 'TASTY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TASTY_URL', plugin_dir_url( __FILE__ ) );
+
+//Define path for admin
 define( 'TASTY_ADMIN_DIR', TASTY_DIR . 'admin/' );
 define( 'TASTY_ADMIN_URL', TASTY_URL . 'admin/' );
+
+//Define path for public
+define( 'TASTY_PUBLIC_DIR', TASTY_DIR . 'public/' );
+define( 'TASTY_PUBLIC_URL', TASTY_URL . 'public/' );
 
 /**
  * The code that runs during plugin activation.
