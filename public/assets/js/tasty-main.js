@@ -15,7 +15,8 @@ let startX = 0;
 let startY = 0;
 let moveX = 0;
 let moveY = 0;
-const storeAction = { likes: [], dislikes: [] };
+const swipedIds = [];
+const loadedIds = [];
 
 // Initialize the system
 function initSwipeCards() {
@@ -25,7 +26,10 @@ function initSwipeCards() {
     fetchInitialData()
         .then(fetchedData => {
             data = fetchedData;
-            data.forEach(item => appendCard(item));
+            data.forEach(item => {
+                appendCard(item)
+                loadedIds.push(item.id);
+            });
 
             // Set the initial card
             current = frame.querySelector('.card:last-child');
@@ -37,6 +41,8 @@ function initSwipeCards() {
     likeButton.addEventListener('click', () => likeHandler('like'));
     hateButton.addEventListener('click', () => hateHandler('dislike'));
 }
+
+
 
 // Fetch initial data
 async function fetchInitialData() {
@@ -125,18 +131,28 @@ function setTransform(x, y, deg, duration, isButtonClick = false) {
 
 // Complete the swipe action
 function completeAction( action, isButtonClick = false ) {
+    const postId = data[data.length - frame.children.length].id;
     const flyMultiplier = innerWidth <= 768 ? 1.5 : 1.7;
     const flyX = (Math.abs(moveX) / moveX) * innerWidth * flyMultiplier;
     const flyY = (moveY / moveX) * flyX;
 
     setTransform(flyX, flyY, flyX / innerWidth * 50, innerWidth, isButtonClick);
 
+    swipedIds.push(postId)
+
     const prev = current;
     const next = current.previousElementSibling;
-    console.log(data[data.length - frame.children.length].id);
-    console.log(action);
 
-    saveChoiceToDatabase( data[data.length - frame.children.length].id, action );
+
+    
+    if( swipedIds.length === 3 ){
+        console.log(loadedIds);
+        fetchMoreData(swipedIds)
+        swipedIds.length = 0;
+
+    }
+
+    saveChoiceToDatabase( postId, action );
 
     if (next) {
         attachCardEventListeners(next);
@@ -151,14 +167,6 @@ function completeAction( action, isButtonClick = false ) {
         frame.removeChild(prev);
         if (!current) displayNoMoreCardsMessage();
     }, 300);
-
-    // Fetch more cards if necessary
-    if (data.length - storeAction.likes.length - storeAction.dislikes.length <= 3) {
-        fetchInitialData().then(newData => {
-            newData.forEach(item => appendCard(item));
-            data.push(...newData);
-        });
-    }
 }
 
 //save user choice in database
@@ -182,6 +190,32 @@ async function saveChoiceToDatabase( postID, action ){
 
         const result = await response.json();
         console.log(result);
+    }catch( error ){
+        throw new Error( error );
+    }
+}
+
+async function fetchMoreData(swipedIds){
+    try{
+        const response = await fetch( getPostEndPoint+`?swiped_ids=${swipedIds}&loaded_ids=${loadedIds}`, {
+            'method': 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': wpApiSettings.nonce
+            },
+            credentials: 'include'
+        } );
+
+        if( ! response.ok ){
+            throw new Error('Failded to fetch more posts');
+        }
+
+        const newPosts = await response.json();
+        newPosts.forEach( item => {
+            loadedIds.push(item.id);
+            appendCard(item);
+        } );
+        data.push(...newPosts);
     }catch( error ){
         throw new Error( error );
     }

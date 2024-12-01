@@ -37,11 +37,14 @@ class Tasty_API_Endpoint{
             'methods'             => 'GET',
             'callback'            => array( $this, 'get_tasty_posts' ) ,
             'args'                => array(
-                'app_user_id' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'absint',
-                ),
                 'swiped_ids' => array(
+                    'required' => false,
+                    'sanitize_callback' => function( $value ){
+                        $sanitize_value =  rest_sanitize_array( $value );
+                        return is_array( $sanitize_value ) ? array_map( 'absint', $sanitize_value ) : array();
+                    },
+                ),
+                'loaded_ids' => array(
                     'required' => false,
                     'sanitize_callback' => function( $value ){
                         $sanitize_value =  rest_sanitize_array( $value );
@@ -97,7 +100,13 @@ class Tasty_API_Endpoint{
             }
         }
 
-        $swiped_ids  = $rquest['swiped_ids'];
+        //initially load 6 posts. When user swiped 3 item them load 3 images only
+        $swiped_ids     = !empty( $rquest['swiped_ids'] ) ? $rquest['swiped_ids'] : [];
+        $loaded_ids     = !empty( $rquest['loaded_ids'] ) ? $rquest['loaded_ids'] : [];
+        $posts_per_page = 6;
+        if( $swiped_ids ){
+            $posts_per_page = 3;
+        }
 
         // if ( ! $user_id && ! $app_user_id ) {
         //     return new WP_REST_Response( [ 'message' => 'User not identified.' ], 400 );
@@ -110,9 +119,11 @@ class Tasty_API_Endpoint{
         //Post IDs that's already chosed by the user.
         $chose_post_ids    = $this->chose_post_ids( $user_identifier, $column_name );
 
+        $excludes_posts    = array_unique( array_merge( $chose_post_ids, $loaded_ids ) );
+
         //Liked post ids
-        $liked_post_ids    = $this->get_liked_post_ids( $user_identifier, $column_name, $swiped_ids );
-        $disliked_post_ids = $this->get_disliked_post_ids( $user_identifier, $column_name, $swiped_ids );
+        $liked_post_ids    = $this->get_liked_post_ids( $user_identifier, $column_name );
+        $disliked_post_ids = $this->get_disliked_post_ids( $user_identifier, $column_name );
 
         //Fetch taxonomy terms for liked and disliked post
         $liked_terms       = [];
@@ -156,11 +167,11 @@ class Tasty_API_Endpoint{
 
         $args = array(
             'post_type'      => 'post',
-            'posts_per_page' => 6,
+            'posts_per_page' => $posts_per_page,
             'orderby'        => 'rand',
             'post_status'    => 'publish',
             'tax_query'      => $tax_query,
-            'post__not_in'   => $chose_post_ids // Exclude previously swiped posts
+            'post__not_in'   => $excludes_posts // Exclude previously swiped posts
         );
 
         // Fetch posts
@@ -177,6 +188,13 @@ class Tasty_API_Endpoint{
                     'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
                 );
             }, $query->posts );
+        }
+
+        if( $swiped_ids ){
+            return new WP_REST_Response( array(
+                'liked_term' => array_unique( $liked_terms ),
+                'disliked_term' => array_unique( $disliked_terms )
+            ), 200 );
         }
         
         return new WP_REST_Response( $posts, 200 );
@@ -202,7 +220,7 @@ class Tasty_API_Endpoint{
 
         return $wpdb->get_col(
             $wpdb->prepare(
-                "SELECT post_id FROM {$wpdb->prefix}user_choices WHERE $column_name = %d",
+                "SELECT post_id FROM {$wpdb->prefix}{$this->user_choices_table} WHERE $column_name = %d",
                 $user_identifier
             )
         );
@@ -219,9 +237,9 @@ class Tasty_API_Endpoint{
      * @since   1.0.0
      * @access  private
      */
-    private function get_liked_post_ids( $user_identifier, $column_name, $provided_ids = [] ){
+    private function get_liked_post_ids( $user_identifier, $column_name ){
         //check args are provided
-        if( empty( $user_identifier ) || $column_name ){
+        if( empty( $user_identifier ) || empty( $column_name ) ){
             return;
         }
 
@@ -230,7 +248,7 @@ class Tasty_API_Endpoint{
         $latest_ids = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT post_id FROM {$wpdb->prefix}{$this->user_choices_table}
-                WHERE $column_name = %d AND choices = %s
+                WHERE $column_name = %d AND choice = %s
                 ORDER BY time DESC LIMIT 3",
                 $user_identifier,
                 'like'
@@ -238,7 +256,7 @@ class Tasty_API_Endpoint{
         );
 
         // Merge provided IDs and latest IDs
-        return array_unique( array_merge( $provided_ids, $latest_ids ) );
+        return $latest_ids;
     }
 
     /**
@@ -251,9 +269,9 @@ class Tasty_API_Endpoint{
      * @since   1.0.0
      * @access  private
      */
-    private function get_disliked_post_ids( $user_identifier, $column_name, $provided_ids = [] ){
+    private function get_disliked_post_ids( $user_identifier, $column_name ){
         //check args are provided
-        if( empty( $user_identifier ) || $column_name ){
+        if( empty( $user_identifier ) || empty( $column_name ) ){
             return;
         }
 
@@ -262,7 +280,7 @@ class Tasty_API_Endpoint{
         $latest_ids = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT post_id FROM {$wpdb->prefix}{$this->user_choices_table}
-                WHERE $column_name = %d AND choices = %s
+                WHERE $column_name = %d AND choice = %s
                 ORDER BY time DESC LIMIT 3",
                 $user_identifier,
                 'dislike'
@@ -270,7 +288,7 @@ class Tasty_API_Endpoint{
         );
 
         // Merge provided IDs and latest IDs
-        return array_unique( array_merge( $provided_ids, $latest_ids ) );
+        return $latest_ids;
     }
 
     /**
