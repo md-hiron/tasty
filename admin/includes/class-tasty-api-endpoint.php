@@ -139,7 +139,7 @@ class Tasty_API_Endpoint{
 
                 $disliked_terms = array_merge(
                     $disliked_terms,
-                    wp_get_object_terms( $disliked_terms, $tag, array( 'fields' => 'ids' ) )
+                    wp_get_object_terms( $disliked_post_ids, $tag, array( 'fields' => 'ids' ) )
                 );
             }
         }
@@ -189,17 +189,8 @@ class Tasty_API_Endpoint{
                 );
             }, $query->posts );
         }
-
-        if( $swiped_ids ){
-            return new WP_REST_Response( array(
-                'liked_term' => array_unique( $liked_terms ),
-                'disliked_term' => array_unique( $disliked_terms )
-            ), 200 );
-        }
         
         return new WP_REST_Response( $posts, 200 );
-    
-
     }
 
     /**
