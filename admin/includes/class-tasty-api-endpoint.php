@@ -139,39 +139,46 @@ class Tasty_API_Endpoint{
 
                 $disliked_terms = array_merge(
                     $disliked_terms,
-                    wp_get_object_terms( $disliked_terms, $tag, array( 'fields' => 'ids' ) )
+                    wp_get_object_terms( $disliked_post_ids, $tag, array( 'fields' => 'ids' ) )
                 );
             }
         }
 
-        //Build Tax queries
-        $tax_query = [];
-
-        if( !empty( $liked_terms ) ){
-            $tax_query[] = array(
-                'taxonomies' => $tasty_tags,
-                'field'      => 'term_id',
-                'terms'      => array_unique( $liked_terms ),
-                'operator'   => 'IN'
-            );
+        $tax_query = array(
+            'relation' => 'OR', // Combine liked and disliked conditions logically
+        );
+        
+        // Add liked terms (if available)
+        if ( !empty( $liked_terms ) ) {
+            foreach ( $tasty_tags as $tag ) {
+                $tax_query[] = array(
+                    'taxonomy' => $tag,
+                    'field'    => 'term_id',
+                    'terms'    => array_unique( $liked_terms ),
+                    'operator' => 'IN',
+                );
+            }
         }
-
-        if( !empty( $disliked_terms ) ){
-            $tax_query[] = array(
-                'taxonomies' => $tasty_tags,
-                'field'      => 'term_id',
-                'terms'      => array_unique( $disliked_terms ),
-                'operator'   => 'NOT IN'
-            );
+        
+        // Exclude disliked terms (if available)
+        if ( !empty( $disliked_terms ) ) {
+            foreach ( $tasty_tags as $tag ) {
+                $tax_query[] = array(
+                    'taxonomy' => $tag,
+                    'field'    => 'term_id',
+                    'terms'    => array_unique( $disliked_terms ),
+                    'operator' => 'NOT IN',
+                );
+            }
         }
 
         $args = array(
             'post_type'      => 'post',
             'posts_per_page' => $posts_per_page,
-            'orderby'        => 'rand',
             'post_status'    => 'publish',
+            'orderby'        => 'rand',
             'tax_query'      => $tax_query,
-            'post__not_in'   => $excludes_posts // Exclude previously swiped posts
+            'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
         );
 
         // Fetch posts
@@ -190,12 +197,12 @@ class Tasty_API_Endpoint{
             }, $query->posts );
         }
 
-        if( $swiped_ids ){
-            return new WP_REST_Response( array(
-                'liked_term' => array_unique( $liked_terms ),
-                'disliked_term' => array_unique( $disliked_terms )
-            ), 200 );
-        }
+        // if( $swiped_ids ){
+        //     return new WP_REST_Response( array(
+        //         'liked_term' => array_unique( $liked_terms ),
+        //         'disliked_term' => array_unique( $disliked_terms )
+        //     ), 200 );
+        // }
         
         return new WP_REST_Response( $posts, 200 );
     

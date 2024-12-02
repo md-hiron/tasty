@@ -51,8 +51,8 @@ body{
   cursor: pointer;
 }
 
-.icons > svg:nth-child(1) { fill: #fb4f68; margin-right: 2vh; }
-.icons > svg:nth-child(2) { fill: #4dca93; }
+.icons > svg:nth-child(1) { fill: #f3586f; margin-right: 2vh; }
+.icons > svg:nth-child(2) { fill: #5bdea5; }
 .icons > svg > path:nth-child(1) { fill: #fff; }
 
 .card {

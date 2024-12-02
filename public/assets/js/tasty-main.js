@@ -257,7 +257,7 @@ function hateHandler(action) {
 function displayNoMoreCardsMessage() {
     const message = document.createElement('div');
     message.className = 'card no-more-cards';
-    message.innerHTML = '<div class="no-more-item">No more cards available</div>';
+    message.innerHTML = '<div class="no-more-item">Keine weiteren Karten vorhanden</div>';
     frame.appendChild(message);
 }
 
