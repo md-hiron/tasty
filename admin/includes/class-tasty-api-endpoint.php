@@ -205,8 +205,6 @@ class Tasty_API_Endpoint{
         // }
         
         return new WP_REST_Response( $posts, 200 );
-    
-
     }
 
     /**
