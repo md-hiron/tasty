@@ -76,6 +76,10 @@ class Tasty_Admin{
      * Load dependencies for admin area
      */
     private function load_dependencies(){
+        require_once TASTY_ADMIN_DIR . 'traits/trait-tasty-tags-weight.php';
+        require_once TASTY_ADMIN_DIR . 'traits/trait-get-tasty-posts.php';
+        require_once TASTY_ADMIN_DIR . 'traits/trait-save-user-choice.php';
+
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-taxonomy.php';
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-custom-field.php';
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-api-endpoint.php';
