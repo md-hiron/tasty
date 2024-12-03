@@ -30,6 +30,7 @@ class Tasty_Database_Tables{
     //define table names
     private static $user_choices_table = 'user_choices';
     private static $app_user_table     = 'app_users';
+    private static $tag_weight_table   = 'tag_weight';
 
     /**
      * Create Custom table for tasty
@@ -41,10 +42,11 @@ class Tasty_Database_Tables{
         //Get table names with WordPress prefix
         $user_choices_table = $wpdb->prefix . self::$user_choices_table;
         $app_user_table     = $wpdb->prefix . self::$app_user_table;
+        $tag_weight_table   = $wpdb->prefix . self::$tag_weight_table;
         $charset_collate    = $wpdb->get_charset_collate();
 
         //check if the tables already exist
-        if( self::table_exists( $user_choices_table ) && self::table_exists( $app_user_table ) ){
+        if( self::table_exists( $user_choices_table ) && self::table_exists( $app_user_table ) && self::table_exists( $tag_weight_table ) ){
             return;
         }
 
@@ -78,6 +80,17 @@ class Tasty_Database_Tables{
             ) $charset_collate
         ";
 
+        $sql_tag_weight = "
+            CREATE TABLE $tag_weight_table (
+                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+                tag_id INT(20) NOT NULL,
+                user_id BIGINT(20) DEFAULT NULL,
+                app_user_id BIGINT(20) DEFAULT NULL,
+                tag_weight_score INT(20) NOT NULL,
+                PRIMARY KEY (id)
+            ) $charset_collate
+        ";
+
         //Include the wordpress upgrade function
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
@@ -87,6 +100,7 @@ class Tasty_Database_Tables{
         //execute SQL queries
         dbDelta( $sql_user_choices );
         dbDelta( $sql_app_users );
+        dbDelta( $sql_tag_weight );
 
         ob_end_clean(); // Clear the buffer
     }

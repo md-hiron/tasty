@@ -178,6 +178,7 @@ class Tasty_API_Endpoint{
             'post_type'      => 'post',
             'posts_per_page' => $posts_per_page,
             'post_status'    => 'publish',
+            'orderby'        => 'rand',
             'tax_query'      => $tax_query,
             'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
         );
@@ -201,6 +202,7 @@ class Tasty_API_Endpoint{
                 'post_type'      => 'post',
                 'posts_per_page' => $posts_per_page,
                 'post_status'    => 'publish',
+                'orderby'        => 'rand',
                 'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
             );
 
