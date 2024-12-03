@@ -103,7 +103,7 @@ class Tasty_API_Endpoint{
         //initially load 6 posts. When user swiped 3 item them load 3 images only
         $swiped_ids     = !empty( $rquest['swiped_ids'] ) ? $rquest['swiped_ids'] : [];
         $loaded_ids     = !empty( $rquest['loaded_ids'] ) ? $rquest['loaded_ids'] : [];
-        $posts_per_page = 6;
+        $posts_per_page = 5;
         if( $swiped_ids ){
             $posts_per_page = 3;
         }
@@ -126,21 +126,23 @@ class Tasty_API_Endpoint{
         $disliked_post_ids = $this->get_disliked_post_ids( $user_identifier, $column_name );
 
         //Fetch taxonomy terms for liked and disliked post
-        $liked_terms       = [];
-        $disliked_terms    = [];
-        $tasty_tags        = Tasty_Helper::get_tasty_tags();
+        $liked_terms    = []; // Associative array to store terms by taxonomy
+        $disliked_terms = [];
+        $tasty_tags     = Tasty_Helper::get_tasty_tags(); // Assume this returns an array of taxonomy names
 
-        if( is_array( $tasty_tags ) ){
-            foreach( $tasty_tags as $tag ){
-                $liked_terms = array_merge(
-                    $liked_terms,
-                    wp_get_object_terms( $liked_post_ids, $tag, array( 'fields' => 'ids' ) )
-                );
+        if ( is_array( $tasty_tags ) ) {
+            foreach ( $tasty_tags as $taxonomy ) {
+                // Get terms for liked posts under the current taxonomy
+                $terms_for_liked = wp_get_object_terms( $liked_post_ids, $taxonomy, array( 'fields' => 'ids' ) );
+                if ( ! empty( $terms_for_liked ) ) {
+                    $liked_terms[ $taxonomy ] = $terms_for_liked; // Store terms by taxonomy label
+                }
 
-                $disliked_terms = array_merge(
-                    $disliked_terms,
-                    wp_get_object_terms( $disliked_post_ids, $tag, array( 'fields' => 'ids' ) )
-                );
+                // Get terms for disliked posts under the current taxonomy
+                $terms_for_disliked = wp_get_object_terms( $disliked_post_ids, $taxonomy, array( 'fields' => 'ids' ) );
+                if ( ! empty( $terms_for_disliked ) ) {
+                    $disliked_terms[ $taxonomy ] = $terms_for_disliked; // Store terms by taxonomy label
+                }
             }
         }
 
@@ -150,11 +152,11 @@ class Tasty_API_Endpoint{
         
         // Add liked terms (if available)
         if ( !empty( $liked_terms ) ) {
-            foreach ( $tasty_tags as $tag ) {
+            foreach ( $liked_terms as $term => $value ) {
                 $tax_query[] = array(
-                    'taxonomy' => $tag,
+                    'taxonomy' => $term,
                     'field'    => 'term_id',
-                    'terms'    => array_unique( $liked_terms ),
+                    'terms'    => $value,
                     'operator' => 'IN',
                 );
             }
@@ -162,47 +164,64 @@ class Tasty_API_Endpoint{
         
         // Exclude disliked terms (if available)
         if ( !empty( $disliked_terms ) ) {
-            foreach ( $tasty_tags as $tag ) {
+            foreach ( $disliked_terms as $term => $value ) {
                 $tax_query[] = array(
-                    'taxonomy' => $tag,
+                    'taxonomy' => $term,
                     'field'    => 'term_id',
-                    'terms'    => array_unique( $disliked_terms ),
+                    'terms'    => $value,
                     'operator' => 'NOT IN',
                 );
             }
         }
 
-        $args = array(
+        $primary_args = array(
             'post_type'      => 'post',
             'posts_per_page' => $posts_per_page,
             'post_status'    => 'publish',
-            'orderby'        => 'rand',
             'tax_query'      => $tax_query,
             'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
         );
 
         // Fetch posts
-        $query = new WP_Query( $args );
+        $primary_query = new WP_Query( $primary_args );
+        $found_posts   = $primary_query->found_posts;
+
+        $fetched_ids    = wp_list_pluck( $primary_query->posts, 'ID' );
+        $excludes_posts = array_merge( $excludes_posts, $fetched_ids );
+
+        //Initial combined posts
+        $combined_posts = $primary_query->posts;
+
+        //if fewer post than needed, fetech additional posts without term
+        if( $found_posts < $posts_per_page ){
+            $remaining_posts_needed = $posts_per_page - $found_posts;
+
+            //secondary args without tax query
+            $secondary_args = array(
+                'post_type'      => 'post',
+                'posts_per_page' => $posts_per_page,
+                'post_status'    => 'publish',
+                'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
+            );
+
+            $secondary_query = new WP_Query( $secondary_args );
+
+            $combined_posts = array_merge( $combined_posts, $secondary_query->posts );
+
+        }
 
         // Prepare response
         $posts = [];
 
-        if ( $query->have_posts() ) {
+        if ( !empty( $combined_posts ) ) {
             $posts = array_map( function( $post ) {
                 return array(
                     'id'             => $post->ID,
                     'title'          => get_the_title( $post->ID ),
                     'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
                 );
-            }, $query->posts );
+            }, $combined_posts );
         }
-
-        // if( $swiped_ids ){
-        //     return new WP_REST_Response( array(
-        //         'liked_term' => array_unique( $liked_terms ),
-        //         'disliked_term' => array_unique( $disliked_terms )
-        //     ), 200 );
-        // }
         
         return new WP_REST_Response( $posts, 200 );
     }
