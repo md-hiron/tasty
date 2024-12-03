@@ -25,6 +25,7 @@ class Tasty_API_Endpoint{
 
     private $user_choices_table = 'user_choices';
     private $app_users_table    = 'app_users';
+    private $tag_weight_table   = 'tag_weight';
 
     /**
      * Register rest route for tatsy
@@ -100,18 +101,18 @@ class Tasty_API_Endpoint{
             }
         }
 
-        //initially load 6 posts. When user swiped 3 item them load 3 images only
+        //initially load 5 posts. When user swiped 3 item them load 3 images only
         $swiped_ids     = !empty( $rquest['swiped_ids'] ) ? $rquest['swiped_ids'] : [];
         $loaded_ids     = !empty( $rquest['loaded_ids'] ) ? $rquest['loaded_ids'] : [];
+
+        //Initail posts per page
         $posts_per_page = 5;
+
+        //Posts per page on next fetch
         if( $swiped_ids ){
             $posts_per_page = 3;
         }
-
-        // if ( ! $user_id && ! $app_user_id ) {
-        //     return new WP_REST_Response( [ 'message' => 'User not identified.' ], 400 );
-        // }
-
+        
         // Fetch swiped posts for the user
         $column_name       = $user_id ? 'user_id' : 'app_user_id';
         $user_identifier   = $user_id ?: $app_user_id;
@@ -120,7 +121,69 @@ class Tasty_API_Endpoint{
         $chose_post_ids    = $this->chose_post_ids( $user_identifier, $column_name );
 
         $excludes_posts    = array_unique( array_merge( $chose_post_ids, $loaded_ids ) );
+        
+        $primary_args = array(
+            'post_type'      => 'post',
+            'posts_per_page' => $posts_per_page,
+            'post_status'    => 'publish',
+            //'orderby'        => 'rand',
+            'tax_query'      => $this->tasty_tax_query( $user_identifier, $column_name ), //tax query from the tasty tax query method
+            'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
+        );
 
+        // Fetch posts
+        $primary_query = new WP_Query( $primary_args );
+        $found_posts   = $primary_query->found_posts;
+
+        $fetched_ids    = wp_list_pluck( $primary_query->posts, 'ID' );
+        $excludes_posts = array_merge( $excludes_posts, $fetched_ids );
+
+        //Initial combined posts
+        $combined_posts = $primary_query->posts;
+
+        //if fewer post than needed, fetech additional posts without term
+        if( $found_posts < $posts_per_page ){
+            $remaining_posts_needed = $posts_per_page - $found_posts;
+
+            //secondary args without tax query
+            $secondary_args = array(
+                'post_type'      => 'post',
+                'posts_per_page' => $posts_per_page,
+                'post_status'    => 'publish',
+                //'orderby'        => 'rand',
+                'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
+            );
+
+            $secondary_query = new WP_Query( $secondary_args );
+
+            $combined_posts = array_merge( $combined_posts, $secondary_query->posts );
+
+        }
+
+        // Prepare response
+        $posts = [];
+
+        if ( !empty( $combined_posts ) ) {
+            $posts = array_map( function( $post ) {
+                return array(
+                    'id'             => $post->ID,
+                    'title'          => get_the_title( $post->ID ),
+                    'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
+                );
+            }, $combined_posts );
+        }
+        
+        return new WP_REST_Response( $posts, 200 );
+    }
+
+    /**
+     * Get tasty tex query
+     * This is one of the main method that work for recommendation. This tax query first try to get heighest tag weight score
+     * if it doesn't found any then it will try to get data by user liked taxonomies. Dislike tags wil be always added if there is disliked terms
+     * 
+     * 
+     */
+    private function tasty_tax_query( $user_identifier, $column_name ){
         //Liked post ids
         $liked_post_ids    = $this->get_liked_post_ids( $user_identifier, $column_name );
         $disliked_post_ids = $this->get_disliked_post_ids( $user_identifier, $column_name );
@@ -149,9 +212,20 @@ class Tasty_API_Endpoint{
         $tax_query = array(
             'relation' => 'OR', // Combine liked and disliked conditions logically
         );
+
+        $heighest_score_tags = $this->get_heighest_weight_tag( $column_name, $user_identifier, 30 );
         
         // Add liked terms (if available)
-        if ( !empty( $liked_terms ) ) {
+        if ( !empty( $heighest_score_tags ) ) {
+            foreach ( $heighest_score_tags as $term => $value ) {
+                $tax_query[] = array(
+                    'taxonomy' => $term,
+                    'field'    => 'term_id',
+                    'terms'    => $value,
+                    'operator' => 'IN',
+                );
+            }
+        }elseif( !empty( $liked_terms)  ){
             foreach ( $liked_terms as $term => $value ) {
                 $tax_query[] = array(
                     'taxonomy' => $term,
@@ -174,59 +248,9 @@ class Tasty_API_Endpoint{
             }
         }
 
-        $primary_args = array(
-            'post_type'      => 'post',
-            'posts_per_page' => $posts_per_page,
-            'post_status'    => 'publish',
-            'orderby'        => 'rand',
-            'tax_query'      => $tax_query,
-            'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
-        );
-
-        // Fetch posts
-        $primary_query = new WP_Query( $primary_args );
-        $found_posts   = $primary_query->found_posts;
-
-        $fetched_ids    = wp_list_pluck( $primary_query->posts, 'ID' );
-        $excludes_posts = array_merge( $excludes_posts, $fetched_ids );
-
-        //Initial combined posts
-        $combined_posts = $primary_query->posts;
-
-        //if fewer post than needed, fetech additional posts without term
-        if( $found_posts < $posts_per_page ){
-            $remaining_posts_needed = $posts_per_page - $found_posts;
-
-            //secondary args without tax query
-            $secondary_args = array(
-                'post_type'      => 'post',
-                'posts_per_page' => $posts_per_page,
-                'post_status'    => 'publish',
-                'orderby'        => 'rand',
-                'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
-            );
-
-            $secondary_query = new WP_Query( $secondary_args );
-
-            $combined_posts = array_merge( $combined_posts, $secondary_query->posts );
-
-        }
-
-        // Prepare response
-        $posts = [];
-
-        if ( !empty( $combined_posts ) ) {
-            $posts = array_map( function( $post ) {
-                return array(
-                    'id'             => $post->ID,
-                    'title'          => get_the_title( $post->ID ),
-                    'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
-                );
-            }, $combined_posts );
-        }
-        
-        return new WP_REST_Response( $posts, 200 );
+        return $tax_query;
     }
+
 
     /**
      * Swipped post Id of a user
@@ -399,12 +423,132 @@ class Tasty_API_Endpoint{
             )
         );
 
+        //Add tag weight scroe
+        $this->save_tag_weight( $post_id, $choice, $user_id, $app_user_id );
+
         return new WP_REST_Response( array( 
             'choice_success' => true, 
             'user_id'        => $user_id, 
             'app_user_id'    => $app_user_id, 
             'message', 'User choice recorded' 
         ), 200 );
+
+    }
+
+    /**
+     * Save tag weight
+     * 
+     * @param   int     $post_id        Post ID of the swiped post
+     * @param   string  $user_choice    Swiped action data
+     * @param   int     $user_id        User ID of the swiped post
+     * @param   int     $app_user_id    App user ID of the swiped post
+     * 
+     * @since   1.0.0
+     * @access  private
+     */
+    private function save_tag_weight( $post_id, $user_choice, $user_id = null, $app_user_id = null  ){
+
+        //check that $post_id and $user_choice shouldn't be empty
+        if( empty( $post_id ) || empty( $user_choice ) ){
+            return;
+        }
+
+        global $wpdb;
+
+        $score_adjustment = $user_choice === 'like' ? 10 : -5;
+        $user_column      = $user_id ? 'user_id' : 'app_user_id';
+        $user_identifier  = $user_id ? $user_id : $app_user_id;
+
+        $tag_weight_table = $wpdb->prefix . $this->tag_weight_table;
+
+        $tasty_tags = Tasty_Helper::get_tasty_tags();
+
+        foreach( $tasty_tags as $tag ){
+            //Get terms associated with the post for this taxonomy
+            $terms = get_the_terms( $post_id, $tag );
+            if( is_array( $terms ) ){
+                foreach( $terms as $term ){
+                    $tag_id        = $term->term_id;
+                    $taxonomy      = $term->taxonomy;
+                    $initail_score = !empty( get_term_meta( $term->term_id, 'tasty_tag_weight', true ) ) ? intval( get_term_meta( $term->term_id, 'tasty_tag_weight', true ) ) : 0;
+
+                    //check if the record exists
+                    $existing_record = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $tag_weight_table WHERE tag_id = %d AND taxonomy = %s AND $user_column = %d",
+                            $tag_id,
+                            $taxonomy,
+                            $user_identifier
+                        )
+                    );
+
+                    if( $existing_record ){
+                        //update existing record
+                        $wpdb->update(
+                            $tag_weight_table,
+                            array(
+                                'tag_weight_score' => max( 0, $existing_record->tag_weight_score + $score_adjustment ) //ensure that score donesn't go below 0
+                            ),
+                            array(
+                                'id' =>  $existing_record->id
+                            ),
+                            array('%d'),
+                            array('%d')
+                        );
+                    }else{
+                        $wpdb->replace(
+                            $tag_weight_table,
+                            array(
+                                'tag_id'           => $tag_id,
+                                'taxonomy'         => $taxonomy,
+                                'user_id'          => $user_id,
+                                'app_user_id'      => $app_user_id,
+                                'tag_weight_score' => max( 0, $initail_score + $score_adjustment )
+                            ),
+                            array(
+                                '%d',
+                                '%s',
+                                '%d',
+                                '%d',
+                                '%d',
+                            )
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Get Heighest tag weight
+     * 
+     * @param   string  Column name of user id or app user id
+     * @param   int     ID of the user or app user
+     * @param   int     Minimum score of tag weight
+     */
+    private function get_heighest_weight_tag($column_name, $user_identifier, $min_tag_score){
+
+        global $wpdb;
+
+        $restults = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT tag_id, taxonomy FROM {$wpdb->prefix}{$this->tag_weight_table}
+                WHERE $column_name = %d AND tag_weight_score >= %d
+                ORDER BY tag_weight_score DESC",
+                $user_identifier,
+                $min_tag_score
+            )
+        );
+
+        $height_score_tags = array();
+
+        if( count( $restults ) > 0 ){
+            foreach( $restults as $reuslt ){
+                $height_score_tags[$reuslt->taxonomy][] = $reuslt->tag_id;
+            }
+        }
+
+        return $height_score_tags;
 
     }
     

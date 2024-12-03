@@ -84,6 +84,7 @@ class Tasty_Database_Tables{
             CREATE TABLE $tag_weight_table (
                 id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
                 tag_id INT(20) NOT NULL,
+                taxonomy VARCHAR(255) NOT NULL,
                 user_id BIGINT(20) DEFAULT NULL,
                 app_user_id BIGINT(20) DEFAULT NULL,
                 tag_weight_score INT(20) NOT NULL,
