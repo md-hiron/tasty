@@ -60,22 +60,46 @@ class Tasty_Custom_Meta_Field{
         //store post ID for repetitive use
         $post_id = $post->ID;
 
-        $size     = ! empty( get_post_meta( $post_id, 'tasty_size', true ) ) ? get_post_meta( $post_id, 'tasty_size', true ) : '';
-        $material = ! empty( get_post_meta( $post_id, 'tasty_material', true ) ) ? get_post_meta( $post_id, 'tasty_material', true ) : '';
-        $shape    = ! empty( get_post_meta( $post_id, 'tasty_shape', true ) ) ? get_post_meta( $post_id, 'tasty_shape', true ) : '';
+        $element_type    = !empty( get_post_meta( $post_id, 'tasty_element_type', true ) ) ? get_post_meta( $post_id, 'tasty_element_type', true ) : '';
+        $additional_info = ! empty( get_post_meta( $post_id, 'addi_info', true ) ) ? get_post_meta( $post_id, 'addi_info', true ) : '';
 
         ?>
             <div class="tasty-custom-meta-field">
-                <label for="tasty_size_meta"><?php _e( 'Size', 'tasty' );?></label>
-                <input type="text" class="tasty-custom-meta-input" name="tasty_size" id="tasty_size_meta" value="<?php echo esc_attr( $size )?>" size="100" />
+                <label for="tasty_element_type"><?php _e( 'Element Type', 'tasty' );?></label>
+                <select name="tasty_element_type" id="tasty_element_type">
+                    <option value=""><?php _e( 'Select Element Type', 'tasty' );?></option>
+                    <?php
+                        $options = array(
+                            'Sink',
+                            'Bathtub',
+                            'Shower',
+                            'Toilet',
+                            'Vanity',
+                            'Mirror',
+                            'Lighting',
+                            'Flooring',
+                            'Wall Tile',
+                            'Towel Rack',
+                            'Shower Head',
+                            'Storage',
+                            'Decor',
+                        );
+
+                        foreach( $options as $option ){
+                            $selected = '';
+
+                            if( $option === $element_type ){
+                                $selected = 'selected';
+                            }
+
+                            printf( '<option value="%s" %s>%s</option>', $option, $selected, __( $option, 'tasty' ) );
+                        }
+                    ?>
+                </select>
             </div>
             <div class="tasty-custom-meta-field">
-                <label for="tasty_mateiral_meta"><?php _e( 'Material', 'tasty' );?></label>
-                <input type="text" class="tasty-custom-meta-input" name="tasty_material" id="tasty_mateiral_meta" value="<?php echo esc_attr( $material )?>" size="100" />
-            </div>
-            <div class="tasty-custom-meta-field">
-                <label for="tasty_shape_meta"><?php _e( 'Shape', 'tasty' );?></label>
-                <input type="text" class="tasty-custom-meta-input" name="tasty_shape" id="tasty_shape_meta" value="<?php echo esc_attr( $shape )?>" size="100" />
+                <label for="addi_info"><?php _e( 'Additional Info', 'tasty' );?></label>
+                <input type="text" class="tasty-custom-meta-input" name="addi_info" id="addi_info" value="<?php echo esc_attr( $additional_info )?>" size="100" />
             </div>
         <?php
 
@@ -108,21 +132,15 @@ class Tasty_Custom_Meta_Field{
         }
 
         //validate and sanitize size meta
-        if( isset( $_POST['tasty_size'] ) ){
-            $sanitized_size = sanitize_text_field( $_POST['tasty_size'] );
-            update_post_meta( $post_id, 'tasty_size', $sanitized_size );
+        if( isset( $_POST['addi_info'] ) ){
+            $sanitized_size = sanitize_text_field( $_POST['addi_info'] );
+            update_post_meta( $post_id, 'addi_info', $sanitized_size );
         }
 
         //validate and sanitize material meta
-        if( isset( $_POST['tasty_material'] ) ){
-            $sanitized_material = sanitize_text_field( $_POST['tasty_material'] );
-            update_post_meta( $post_id, 'tasty_material', $sanitized_material );
-        }
-
-        //validate and sanitize shape meta
-        if( isset( $_POST['tasty_shape'] ) ){
-            $sanitized_shape = sanitize_text_field( $_POST['tasty_shape'] );
-            update_post_meta( $post_id, 'tasty_shape', $sanitized_shape );
+        if( isset( $_POST['tasty_element_type'] ) ){
+            $sanitized_material = sanitize_text_field( $_POST['tasty_element_type'] );
+            update_post_meta( $post_id, 'tasty_element_type', $sanitized_material );
         }
 
     }

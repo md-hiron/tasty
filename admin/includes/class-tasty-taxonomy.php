@@ -89,37 +89,7 @@ class Tasty_Taxonomies{
         );
 
         register_taxonomy( 'color', 'post', $args );
-
-        unset( $labels );
-        unset( $args );
-
-        // Element Type taxonomy
-        $labels = array(
-            'name'              => _x( 'Element Type', 'taxonomy general name', 'tasty' ),
-            'singular_name'     => _x( 'Element Type', 'taxonomy singular name', 'tasty' ),
-            'search_items'      => __( 'Search Element Type', 'tasty' ),
-            'all_items'         => __( 'All Element Types', 'tasty' ),
-            'parent_item'       => __( 'Parent Element Type', 'tasty' ),
-            'parent_item_colon' => __( 'Parent Element Type:', 'tasty' ),
-            'edit_item'         => __( 'Edit Element Type', 'tasty' ),
-            'update_item'       => __( 'Update Element Type', 'tasty' ),
-            'add_new_item'      => __( 'Add New Element Type', 'tasty' ),
-            'new_item_name'     => __( 'New Element Type Name', 'tasty' ),
-            'menu_name'         => __( 'Element Type', 'tasty' ),
-        );
-
-        $args = array(
-            'hierarchical'      => true,
-            'labels'            => $labels,
-            'show_ui'           => true,
-            'public'            => true,
-            'query_var'         => true,
-            'show_in_rest'      => true,
-            'rewrite'           => array( 'slug' => 'element-type' ),
-        );
-
-        register_taxonomy( 'element-type', 'post', $args );
-
+        
         unset( $labels );
         unset( $args );
 

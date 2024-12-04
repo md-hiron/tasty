@@ -169,7 +169,6 @@ class Tasty {
 		 */
 		$this->loader->add_action( 'style_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
 		$this->loader->add_action( 'color_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
-		$this->loader->add_action( 'element-type_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
 		$this->loader->add_action( 'material_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
 		$this->loader->add_action( 'size_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
 		$this->loader->add_action( 'shape_add_form_fields', $tasty_custom_field, 'add_custom_meta_for_tax' );
@@ -186,7 +185,6 @@ class Tasty {
 		 */
 		$this->loader->add_action( 'style_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
 		$this->loader->add_action( 'color_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
-		$this->loader->add_action( 'element-type_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
 		$this->loader->add_action( 'material_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
 		$this->loader->add_action( 'size_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
 		$this->loader->add_action( 'shape_edit_form_fields', $tasty_custom_field, 'edit_custom_meta_for_tax' );
@@ -203,7 +201,6 @@ class Tasty {
 		 */
 		$this->loader->add_action( 'created_style', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'created_color', $tasty_custom_field, 'save_custom_meta_for_tax' );
-		$this->loader->add_action( 'created_element-type', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'created_material', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'created_size', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'created_shape', $tasty_custom_field, 'save_custom_meta_for_tax' );
@@ -220,7 +217,6 @@ class Tasty {
 		 */
 		$this->loader->add_action( 'edited_style', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'edited_color', $tasty_custom_field, 'save_custom_meta_for_tax' );
-		$this->loader->add_action( 'edited_element-type', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'edited_material', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'edited_size', $tasty_custom_field, 'save_custom_meta_for_tax' );
 		$this->loader->add_action( 'edited_shape', $tasty_custom_field, 'save_custom_meta_for_tax' );
@@ -237,7 +233,6 @@ class Tasty {
 		 */
 		$this->loader->add_filter( 'manage_edit-style_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
 		$this->loader->add_filter( 'manage_edit-color_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
-		$this->loader->add_filter( 'manage_edit-element-type_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
 		$this->loader->add_filter( 'manage_edit-material_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
 		$this->loader->add_filter( 'manage_edit-size_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
 		$this->loader->add_filter( 'manage_edit-shape_columns', $tasty_custom_field, 'add_custom_meta_in_tax_column' );
@@ -254,7 +249,6 @@ class Tasty {
 		 */
 		$this->loader->add_filter( 'manage_style_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 		$this->loader->add_filter( 'manage_color_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
-		$this->loader->add_filter( 'manage_element-type_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 		$this->loader->add_filter( 'manage_material_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 		$this->loader->add_filter( 'manage_size_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
 		$this->loader->add_filter( 'manage_shape_custom_column', $tasty_custom_field, 'show_column_value_in_tax', 10, 3 );
