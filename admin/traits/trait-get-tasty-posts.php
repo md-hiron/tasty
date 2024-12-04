@@ -51,7 +51,7 @@ trait Get_Tasty_Posts{
         global $wpdb;
         
         //current user ID
-        $user_id     = get_current_user_id();
+        $user_id = get_current_user_id();
 
         //get app user ID if user is not loggedin
         $session_id  = isset( $_COOKIE['app_user_session'] ) ? sanitize_text_field( $_COOKIE['app_user_session'] ) : null;

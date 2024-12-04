@@ -84,12 +84,9 @@ trait Save_User_Choice{
         $post_id     = !empty( $request['post_id'] ) ? absint( $request['post_id'] ) : null;
         $choice      = !empty( $request['choice'] ) ? sanitize_text_field( $request['choice'] ) : null;
 
-        //Validate choices
-        if( ! in_array( $choice, array( 'like', 'dislike' ) ) || !$post_id ){
-            return new WP_REST_Response( array( 'message' => 'Invalid Parameters' ), 400 );
+        if( !$user_id && !$app_user_id ){
+            return new WP_REST_Response( array( 'message' => 'User not defined', 'user_id' => $user_id, 'app_user_id' => $app_user_id, 'session_id' => $session_id  ), 400 );
         }
-
-        
 
         //Insert or update user choices data in the database
         $wpdb->replace(
