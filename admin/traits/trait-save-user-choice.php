@@ -51,7 +51,8 @@ trait Save_User_Choice{
 
         if( ! $user_id ){
             if( ! $session_id ){
-                $session_id = uniqid( 'app_user_', true );
+                $uniqueId = uniqid();
+                $session_id = 'app_user_' . substr($uniqueId, -3);
 
                 //insert a new app user into the datatable
                 $wpdb->insert(

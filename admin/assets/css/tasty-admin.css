@@ -7,3 +7,32 @@
 .tasty-custom-meta-field {
     margin-bottom: 25px;
 }
+
+/* user report table */
+table.tasty-user-report-table {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 20px;
+}
+
+table.tasty-user-report-table th {
+    padding: 5px;
+    border-left: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+table.tasty-user-report-table th:last-child, table.tasty-user-report-table td:last-child {
+    border-right: 1px solid #ddd;
+}
+
+table.tasty-user-report-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+    border-left: 1px solid #ddd;
+}
+
+table.tasty-user-report-table tbody tr:nth-child(odd) {
+    background: #e3e3e3;
+}

@@ -26,7 +26,7 @@ class Tasty_API_Endpoint{
     /**
      * connecting traits
      */
-    use Get_Tasty_Posts, Save_User_Choice;
+    use Get_Tasty_Posts, Save_User_Choice, Get_All_User_Report;
 
     /**
      * Register rest route for tatsy
@@ -71,6 +71,21 @@ class Tasty_API_Endpoint{
                 )
             ),
             'permission_callback' => '__return_true'
+        ) );
+
+        //Get all user choices
+        register_rest_route( 'tasty/v1', 'get_all_user_report', array(
+            'methods'  => 'GET',
+            'callback' => array( $this, 'get_all_user_report' ),
+            'args'     => array(
+                'search'   => array(
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field'
+                )
+            ),
+            'permission_callback' => function( $request ){
+                return current_user_can('manage_options');
+            }
         ) );
     }
 
