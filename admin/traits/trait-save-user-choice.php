@@ -128,6 +128,7 @@ trait Save_User_Choice{
         global $wpdb;
 
         $user_choice       = !empty( $request['choice'] ) ? $request['choice'] : 'like';
+        $element           = !empty( $request['element'] ) ? $request['element'] : '';
         $user_choice_table = $wpdb->prefix . $this->user_choices_table
 
         $get_choices_post_ids = $wpdb->get_col( $wpdb->prepare(
@@ -135,15 +136,31 @@ trait Save_User_Choice{
             $user_choice
         ) );
             
-        $user_choice_data = [];
+        $args = new WP_Query( array( 
+            'post_type'    => 'post',
+            'post_status'  => 'publish',
+            'post__in'     => $get_choices_post_ids,
+            'meta_key'     => 'tasty_element_type',
+            'meta_value'   => $element,
+            'meta_compare' => '='
+        ) );
 
-        if( count( $get_choices_post_ids ) > 0 ){
-            foreach( $get_choices_post_ids as $id ){
-                $user_choice_data[] = array(
-                    'image' => get_
+        $element_preference_query = new WP_Query( $args );
+
+        $posts = [];
+
+        if( !empty( $element_preference_query ) ){
+            $posts = array_map( function( $post ){
+                return array(
+                    'title'          => get_the_title( $post->ID ),
+                    'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
                 );
-            }
+            }, $element_preference_query->posts );
         }
+
+        return new WP_REST_Response( $posts, 200 );
+
+
     }
     
 
