@@ -42,6 +42,16 @@ class Tasty_User_Report{
             array( $this, 'user_report_primary_page' ),
             'dashicons-analytics'
         );
+
+        //Add submenu page for usr specific report
+        add_submenu_page( 
+            'tasty-user-report', 
+            __( 'Preferences by Bathroom Element', 'tasty' ),
+            __( 'Preferences', 'tasty' ),
+            'manage_options',
+            'preferences-bathroom-element', 
+            array( $this, 'preferences_bathroom_element' )
+        );
     }
 
     /**
@@ -63,28 +73,9 @@ class Tasty_User_Report{
                         <th><?php _e( 'Date of Last Interaction', 'tasty' );?></th>
                     </tr>
                 </thead>
-                <tbody id="all_user_report">
-                    <!--
-                    <?php 
-                        $all_tasty_users = Tasty_Helper::get_all_wp_and_app_users();
-                        if( is_array( $all_tasty_users ) && count( $all_tasty_users ) > 0 ){
-                            foreach( $all_tasty_users as $user ){
-                                ?>
-                                <tr>
-                                    <td><?php echo $this->get_tasty_user_data( $user, 'email' ); ?></td>
-                                    <td><?php echo $this->get_tasty_user_data( $user, 'like_share' ); ?></td>
-                                    <td><?php echo $this->get_tasty_user_data( $user, 'total_interactions' ); ?></td>
-                                    <td><?php echo $this->get_tasty_user_data( $user, 'last_interaction' ); ?></td>
-                                </tr>
-                                <?php
-                            }
-                        }
-                    ?>
-                    -->
-                    
-                </tbody>
+                <tbody id="all_user_report"></tbody>
             </table>
-            <p id="all-user-loading">Loading...</p>
+            <p id="all-user-loading"><?php _e( 'Loading...', 'tasty' );?></p>
         </div>
         <?php
     }
@@ -167,6 +158,36 @@ class Tasty_User_Report{
         }
 
 
+    }
+
+    /**
+     * Preferences Bathroom element page content
+     */
+    public function preferences_bathroom_element(){
+        ?>
+        <div class="wrap">
+            <h1><?php _e( 'Tasty User Report', 'tasty' );?></h1>
+            <div class="user-dropdown-area">
+                <label for="preference-user"><?php _e( 'Preference By User:' ); ?></label>
+                <select name="preference-user" id="preference-user">
+                    <option value=""><?php _e( 'Global Preference' );?></option>
+                </select>
+            </div>
+            <div class="preference-tab-area">
+                <div class="preference-tab-btn-area">
+                    <button class="preference-tab-btn" data-element="sink"><?php _e( 'Sink', 'tasty' );?></button>
+                    <button class="preference-tab-btn" data-element="bathtub"><?php _e( 'Bathtub', 'tasty' );?></button>
+                    <button class="preference-tab-btn" data-element="shower"><?php _e( 'Shower', 'tasty' );?></button>
+                </div>
+                <div class="preference-tab-content-area">
+                    <div id="preference-tab-content">
+                        <p><?php _e( 'Loading...', 'tasty' );?></p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <?php
     }
 
     

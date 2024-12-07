@@ -73,6 +73,29 @@ class Tasty_API_Endpoint{
             'permission_callback' => '__return_true'
         ) );
 
+        //Get Choices
+        register_rest_route( 'tasty/v1', 'get_choices', array(
+            'methods'  => 'GET',
+            'callback' => array( $this, 'get_user_choices' ),
+            'args'     => array(
+                'element'   => array(
+                    'required' => false,
+                    'sanitize_callback' => 'sanitize_text_field'
+                ),
+                'choice'   => array(
+                    'required' => false,
+                    'sanitize_callback' => 'sanitize_text_field'
+                ),
+                'user'   => array(
+                    'required' => false,
+                    'sanitize_callback' => 'sanitize_text_field'
+                )
+            ),
+            'permission_callback' => function( $request ){
+                return current_user_can('manage_options');
+            }
+        ) );
+
         //Get all user choices
         register_rest_route( 'tasty/v1', 'get_all_user_report', array(
             'methods'  => 'GET',
@@ -87,6 +110,8 @@ class Tasty_API_Endpoint{
                 return current_user_can('manage_options');
             }
         ) );
+
+        
     }
 
     

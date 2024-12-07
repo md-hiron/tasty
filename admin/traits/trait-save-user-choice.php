@@ -119,6 +119,32 @@ trait Save_User_Choice{
         ), 200 );
 
     }
+
+    /**
+     * Get tasty user choice 
+     */
+    public function get_user_choices( $request ){
+
+        global $wpdb;
+
+        $user_choice       = !empty( $request['choice'] ) ? $request['choice'] : 'like';
+        $user_choice_table = $wpdb->prefix . $this->user_choices_table
+
+        $get_choices_post_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT post_id FROM $user_choice_table WHERE choice = %s",
+            $user_choice
+        ) );
+            
+        $user_choice_data = [];
+
+        if( count( $get_choices_post_ids ) > 0 ){
+            foreach( $get_choices_post_ids as $id ){
+                $user_choice_data[] = array(
+                    'image' => get_
+                );
+            }
+        }
+    }
     
 
 }
