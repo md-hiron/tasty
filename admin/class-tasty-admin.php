@@ -70,6 +70,9 @@ class Tasty_Admin{
     public function enqueue_admin_scripts(){
         wp_enqueue_style( $this->plugin_name .'-admin', TASTY_ADMIN_URL . 'assets/css/tasty-admin.css', array(), time() );
         wp_enqueue_script( $this->plugin_name .'-admin', TASTY_ADMIN_URL . 'assets/js/tasty-admin.js', array(), time(), true );
+        wp_localize_script( $this->plugin_name .'-admin', 'wpApiSettings', array(
+            'nonce' => wp_create_nonce('wp_rest')
+        ));
     }
 
     /**

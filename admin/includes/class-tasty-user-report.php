@@ -63,7 +63,8 @@ class Tasty_User_Report{
                         <th><?php _e( 'Date of Last Interaction', 'tasty' );?></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="all_user_report">
+                    <!--
                     <?php 
                         $all_tasty_users = Tasty_Helper::get_all_wp_and_app_users();
                         if( is_array( $all_tasty_users ) && count( $all_tasty_users ) > 0 ){
@@ -79,9 +80,11 @@ class Tasty_User_Report{
                             }
                         }
                     ?>
+                    -->
                     
                 </tbody>
             </table>
+            <p id="all-user-loading">Loading...</p>
         </div>
         <?php
     }

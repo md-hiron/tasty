@@ -49,7 +49,7 @@ class Tasty_Helper{
      * @since   1.0.0
      * @access public
      */
-    public function get_all_wp_and_app_users(){
+    public static function get_all_wp_and_app_users(){
 
         global $wpdb;
         

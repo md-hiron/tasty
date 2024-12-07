@@ -79,7 +79,7 @@ class Tasty_API_Endpoint{
             'callback' => array( $this, 'get_all_user_report' ),
             'args'     => array(
                 'search'   => array(
-                    'required' => true,
+                    'required' => false,
                     'sanitize_callback' => 'sanitize_text_field'
                 )
             ),

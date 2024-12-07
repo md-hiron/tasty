@@ -38,8 +38,6 @@ trait Get_All_User_Report{
      */
     public function get_all_user_report( $request ){
 
-        global $wpdb;
-
         $all_tasty_users = Tasty_Helper::get_all_wp_and_app_users();
 
         $user_report = [];
@@ -48,12 +46,19 @@ trait Get_All_User_Report{
             foreach( $all_tasty_users as $user ){
                 $user_report[] = array(
                     'email'              => $this->get_tasty_user_data( $user, 'email' ),
-                    'email'              => $this->get_tasty_user_data( $user, 'email' ),
                     'like_share'         => $this->get_tasty_user_data( $user, 'like_share' ),
                     'total_interactions' => $this->get_tasty_user_data( $user, 'total_interactions' ),
                     'last_interaction'   => $this->get_tasty_user_data( $user, 'last_interaction' ),
                 );
             }
+        }
+
+        $search_term = $request['search'];
+
+        if( ! empty( $search_term ) ){
+            $user_report = array_filter( $user_report, function( $user ){
+                return strpos( $user['email'], $search_term ) !== false;
+            } );
         }
 
         return new WP_REST_Response( $user_report, 200 );
@@ -109,6 +114,11 @@ trait Get_All_User_Report{
             )
         );
 
+        //end function if there is no interaction
+        if( count( $user_choices ) === 0 ){
+            return;
+        }
+
         //Get Like share
         if( 'like_share' === $target_info ){
 
@@ -117,8 +127,13 @@ trait Get_All_User_Report{
 				return $item === 'like';
 			} ));
 
+            if( $total_choices && $total_likes ){
+                return number_format( ( $total_likes / $total_choices ) * 100, 1) . '%';
+            }
 			//return like share in percentage
-			return number_format( ( $total_likes / $total_choices ) * 100, 1) . '%';
+
+            return '0.00%';
+			
         }
 
         //Get total Interaction
@@ -134,7 +149,7 @@ trait Get_All_User_Report{
 
             ) );
 
-            return (new DateTime($date))->format('d M, Y');
+            return (new DateTime($last_date))->format('d M, Y');
         }
 
 
