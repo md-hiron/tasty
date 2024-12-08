@@ -80,102 +80,53 @@ class Tasty_User_Report{
         <?php
     }
 
-    /**
-     * Get tasty user data by user id
-     * 
-     * @param   array    $user_indentifier   An array with user id and user type (wp or app user)
-     * @param   string   $target_info               Targeted user info that we want to show
-     * 
-     * @return  string  User data according to user identifier and target data
-     * 
-     * @since   1.0.0
-     * @access  public
-     */
-    public function get_tasty_user_data( $user_indentifier, $target_info ){
-
-        // Check arguments are provided
-        if( ! is_array( $user_indentifier ) || empty( $target_info ) ){
-            return;
-        }
-
-        global $wpdb;
-
-        $app_user_table    = $wpdb->prefix . 'app_users';
-        $user_choice_table = $wpdb->prefix . 'user_choices';
-
-        $user_column       = $user_indentifier['user_type'];
-
-        // Get user email
-        if( 'email' === $target_info ){
-            if( 'user_id' === $user_column ){
-                $user = get_userdata( $user_indentifier['user_id'] );
-
-                return $user->user_email;
-            }else{
-                return $wpdb->get_var( $wpdb->prepare( 
-                    "SELECT email FROM $app_user_table where id = %d",
-                    $user_indentifier['user_id']
-                 ) );
-            }
-        }
-
-
-        //user choices
-        $user_choices = $wpdb->get_col( 
-            $wpdb->prepare(
-                "SELECT choice FROM $user_choice_table
-                WHERE $user_column = %d",
-                $user_indentifier['user_id']
-            )
-        );
-
-        //Get Like share
-        if( 'like_share' === $target_info ){
-
-			$total_choices = count( $user_choices );
-			$total_likes = count(array_filter( $user_choices, function( $item ){
-				return $item === 'like';
-			} ));
-
-			//return like share in percentage
-			return number_format( ( $total_likes / $total_choices ) * 100, 1) . '%';
-        }
-
-        //Get total Interaction
-        if( 'total_interactions' == $target_info ){
-            return count( $user_choices );
-        }
-
-        //Get last intercations timem
-        if( 'last_interaction' == $target_info ){
-            $last_date = $wpdb->get_var( $wpdb->prepare(
-                "SELECT Max(time) FROM $user_choice_table WHERE $user_column = %d",
-                $user_indentifier['user_id']
-
-            ) );
-
-            return (new DateTime($date))->format('d M, Y');
-        }
-
-
-    }
+    
 
     /**
      * Preferences Bathroom element page content
      */
     public function preferences_bathroom_element(){
+       
+        $all_user = Tasty_Helper::get_all_wp_and_app_users();
+        $options  = [];
+        if( is_array( $all_user ) ){
+            foreach( $all_user as $user ){
+
+                $user_email = Tasty_Helper::get_user_email_by_id( $user['user_type'], $user['user_id'] );
+
+                if( 'wp_user' === $user['user_type'] ){
+                   $options[] = array(
+                        'user'  => 'wp_user_' . $user['user_id'],
+                        'email' => $user_email
+                   );
+                }
+
+                if( 'app_user' === $user['user_type'] ){
+                    $options[] = array(
+                        'user'  => 'app_user_' . $user['user_id'],
+                        'email' => $user_email,
+                    );
+                }
+            }
+        }
+        
         ?>
         <div class="wrap">
             <h1><?php _e( 'Tasty User Report', 'tasty' );?></h1>
             <div class="user-dropdown-area">
                 <label for="preference-user"><?php _e( 'Preference By User:' ); ?></label>
                 <select name="preference-user" id="preference-user">
-                    <option value=""><?php _e( 'Global Preference' );?></option>
+                    <?php
+                        foreach( $options as $option ){
+                            printf( '<option value="%s">%s</option>', $option['user'], $option['email'] );
+                        }
+                    ?>
                 </select>
+                
             </div>
             <div class="preference-tab-area">
                 <div class="preference-tab-btn-area">
-                    <button class="preference-tab-btn" data-element="sink"><?php _e( 'Sink', 'tasty' );?></button>
+                    <button class="preference-tab-btn active-element" data-element="sink"><?php _e( 'Sink', 'tasty' );?></button>
                     <button class="preference-tab-btn" data-element="bathtub"><?php _e( 'Bathtub', 'tasty' );?></button>
                     <button class="preference-tab-btn" data-element="shower"><?php _e( 'Shower', 'tasty' );?></button>
                 </div>

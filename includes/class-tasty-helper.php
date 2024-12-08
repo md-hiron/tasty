@@ -66,19 +66,44 @@ class Tasty_Helper{
         
         foreach( $wp_users as $user ){
             $combined_user[] = array(
-                'user_type' => 'user_id',
+                'user_type' => 'wp_user',
                 'user_id'   =>  $user
             );
         }
 
         foreach( $app_users as $user ){
             $combined_user[] = array(
-                'user_type' => 'app_user_id',
+                'user_type' => 'app_user',
                 'user_id'   =>  $user
             );
         }
 
         return $combined_user;
+
+    }
+
+    /**
+     * get user email by ID
+     */
+    public static function get_user_email_by_id( $user_type, $user_id ){
+        if( empty( $user_type ) || empty( $user_id ) ){
+            return;
+        }
+
+        global $wpdb;
+
+        if( 'wp_user' === $user_type ){
+            $user = get_userdata( $user_id );
+
+            return $user->user_email;
+
+        }elseif( 'app_user' === $user_type ){
+            return $wpdb->get_var( $wpdb->prepare( 
+                "SELECT email FROM {$wpdb->prefix}app_users where id = %d",
+                $user_id
+             ) );
+        }
+
 
     }
 }

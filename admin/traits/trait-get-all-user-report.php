@@ -88,20 +88,11 @@ trait Get_All_User_Report{
         $app_user_table    = $wpdb->prefix . 'app_users';
         $user_choice_table = $wpdb->prefix . 'user_choices';
 
-        $user_column       = $user_indentifier['user_type'];
+        $user_column       = $user_indentifier['user_type'] === 'wp_user' ? 'user_id' : 'app_user_id';
 
         // Get user email
         if( 'email' === $target_info ){
-            if( 'user_id' === $user_column ){
-                $user = get_userdata( $user_indentifier['user_id'] );
-
-                return $user->user_email;
-            }else{
-                return $wpdb->get_var( $wpdb->prepare( 
-                    "SELECT email FROM $app_user_table where id = %d",
-                    $user_indentifier['user_id']
-                 ) );
-            }
+           return Tasty_Helper::get_user_email_by_id( $user_indentifier['user_type'], $user_indentifier['user_id'] );
         }
 
 

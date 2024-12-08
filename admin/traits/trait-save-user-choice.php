@@ -126,24 +126,35 @@ trait Save_User_Choice{
     public function get_user_choices( $request ){
 
         global $wpdb;
+        $user_choice_table = $wpdb->prefix . $this->user_choices_table;
 
         $user_choice       = !empty( $request['choice'] ) ? $request['choice'] : 'like';
         $element           = !empty( $request['element'] ) ? $request['element'] : '';
-        $user_choice_table = $wpdb->prefix . $this->user_choices_table
+
+        //Get user info
+        $user_info         = $this->get_user_info( $request['user'] );
+        $user_column       = !empty( $user_info ) ? $user_info['column'] : 'user_id';
+        $user_id           = !empty( $user_info ) ? $user_info['user_id'] : get_current_user_id();
 
         $get_choices_post_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT post_id FROM $user_choice_table WHERE choice = %s",
-            $user_choice
+            "SELECT post_id FROM $user_choice_table WHERE choice = %s AND $user_column = %d",
+            $user_choice,
+            $user_id
+
         ) );
+
+        if( count( $get_choices_post_ids ) === 0 ){
+            return new WP_REST_Response( [], 200 );
+        }
             
-        $args = new WP_Query( array( 
+        $args = array( 
             'post_type'    => 'post',
             'post_status'  => 'publish',
             'post__in'     => $get_choices_post_ids,
             'meta_key'     => 'tasty_element_type',
             'meta_value'   => $element,
             'meta_compare' => '='
-        ) );
+        );
 
         $element_preference_query = new WP_Query( $args );
 
@@ -162,6 +173,31 @@ trait Save_User_Choice{
 
 
     }
+
+    /**
+     * Get User info
+     */
+    public function get_user_info( $user_info ) {
+        // Check if the input matches wp_user_[number]
+        if (preg_match('/^wp_user_(\d+)$/', $user_info, $matches)) {
+            return [
+                'column' => 'user_id',
+                'user_id' => $matches[1]
+            ];
+        }
+    
+        // Check if the input matches app__user_[number]
+        if (preg_match('/^app_user_(\d+)$/', $user_info, $matches)) {
+            return [
+                'column' => 'app_user_id',
+                'user_id' => $matches[1]
+            ];
+        }
+    
+        // If no match, return null
+        return null;
+    }
+    
     
 
 }
