@@ -40,7 +40,8 @@ class Tasty_User_Report{
             'manage_options',
             'tasty-user-report',
             array( $this, 'user_report_primary_page' ),
-            'dashicons-analytics'
+            'dashicons-analytics',
+            20
         );
 
         //Add submenu page for usr specific report

@@ -93,7 +93,7 @@ trait Get_Tasty_Posts{
             'post_type'      => 'post',
             'posts_per_page' => $posts_per_page,
             'post_status'    => 'publish',
-            //'orderby'        => 'rand',
+            'orderby'        => 'rand',
             'tax_query'      => $this->tasty_tax_query( $user_identifier, $column_name ), //tax query from the tasty tax query method
             'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
         );
@@ -117,7 +117,7 @@ trait Get_Tasty_Posts{
                 'post_type'      => 'post',
                 'posts_per_page' => $posts_per_page,
                 'post_status'    => 'publish',
-                //'orderby'        => 'rand',
+                'orderby'        => 'rand',
                 'post__not_in'   => $excludes_posts, // Exclude previously swiped posts
             );
 
@@ -136,6 +136,7 @@ trait Get_Tasty_Posts{
                     'id'             => $post->ID,
                     'title'          => get_the_title( $post->ID ),
                     'featured_image' => get_the_post_thumbnail_url( $post->ID, 'full' ),
+                    'addition_info'  => !empty( get_post_meta( $post->ID, 'addi_info', true ) ) ? get_post_meta( $post->ID, 'addi_info', true ) : null
                 );
             }, $combined_posts );
         }
@@ -257,7 +258,7 @@ trait Get_Tasty_Posts{
     private function get_liked_post_ids( $user_identifier, $column_name ){
         //check args are provided
         if( empty( $user_identifier ) || empty( $column_name ) ){
-            return;
+            return array();
         }
 
         global $wpdb;

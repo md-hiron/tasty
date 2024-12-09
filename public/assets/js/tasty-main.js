@@ -53,7 +53,14 @@ async function fetchInitialData() {
             },
             credentials: 'include'
         });
-        return response.ok ? await response.json() : [];
+        const fetchData =  response.ok ? await response.json() : [];
+
+        if( fetchData.length === 0 ){
+            appendPlaceholderCard( 'Für den aktuellen Benutzer sind keine Beiträge verfügbar' );
+        }
+
+        return fetchData;
+
     } catch (error) {
         console.error('Error fetching data:', error);
         return [];
@@ -73,6 +80,7 @@ function appendCard(cardData) {
             <div class="title">
                 <span>${cardData.title}</span>
             </div>
+            ${ cardData.addition_info ? `<h3 class="tasty-additional">${cardData.addition_info}</h3>` : '' }
         </div>
     `;
     if (firstCard) frame.insertBefore(newCard, firstCard);
@@ -196,6 +204,7 @@ async function saveChoiceToDatabase( postID, action ){
 }
 
 async function fetchMoreData(swipedIds){
+   //appendLoadingCard();
     try{
         const response = await fetch( getPostEndPoint+`?swiped_ids=${swipedIds}&loaded_ids=${loadedIds}`, {
             'method': 'GET',
@@ -211,11 +220,15 @@ async function fetchMoreData(swipedIds){
         }
 
         const newPosts = await response.json();
+
         newPosts.forEach( item => {
             loadedIds.push(item.id);
             appendCard(item);
         } );
         data.push(...newPosts);
+
+       
+        
     }catch( error ){
         throw new Error( error );
     }
@@ -260,6 +273,53 @@ function displayNoMoreCardsMessage() {
     message.innerHTML = '<div class="no-more-item">Keine weiteren Karten vorhanden</div>';
     frame.appendChild(message);
 }
+
+// Append a placeholder card to the frame
+function appendPlaceholderCard(message) {
+    const placeholderCard = document.createElement('div');
+    placeholderCard.className = 'card placeholder-card';
+    placeholderCard.innerHTML = `
+        <div class="no-more-item">${message}</div>
+    `;
+    frame.appendChild(placeholderCard);
+    setButtonsDisabled(true);
+}
+
+// Append a loading card to the frame
+function appendLoadingCard() {
+    const loadingCard = document.createElement('div');
+    loadingCard.className = 'card loading-card';
+    loadingCard.innerHTML = '<div class="no-more-item">Loading...</div>';
+    frame.insertBefore(loadingCard, frame.firstChild);
+}
+
+// Remove the loading card
+function removeLoadingCard() {
+    const loadingCard = frame.querySelector('.loading-card');
+    if (loadingCard) {
+        frame.removeChild(loadingCard);
+    }
+}
+
+// Utility function to toggle button state
+function setButtonsDisabled(isDisabled) {
+    const likeButton = document.querySelector(likeButtonSelector);
+    const hateButton = document.querySelector(hateButtonSelector);
+
+    if (likeButton) likeButton.disabled = isDisabled;
+    if (hateButton) hateButton.disabled = isDisabled;
+
+    if (isDisabled) {
+        likeButton?.classList.add('disabled');
+        hateButton?.classList.add('disabled');
+    } else {
+        likeButton?.classList.remove('disabled');
+        hateButton?.classList.remove('disabled');
+    }
+}
+
+
+
 
 // Initialize the swipe card system
 initSwipeCards();
