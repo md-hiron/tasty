@@ -53,6 +53,16 @@ class Tasty_User_Report{
             'preferences-bathroom-element', 
             array( $this, 'preferences_bathroom_element' )
         );
+
+        //Add submenu page for usr specific report
+        add_submenu_page( 
+            'tasty-user-report', 
+            __( 'Tag Performance Indicators', 'tasty' ),
+            __( 'Tag Performance Indicators ', 'tasty' ),
+            'manage_options',
+            'tag-performance-indicators', 
+            array( $this, 'tag_performance_indicators' )
+        );
     }
 
     /**
@@ -81,13 +91,10 @@ class Tasty_User_Report{
         <?php
     }
 
-    
-
     /**
-     * Preferences Bathroom element page content
+     * User dropdown
      */
-    public function preferences_bathroom_element(){
-       
+    public function user_dropdown(){
         $all_user = Tasty_Helper::get_all_wp_and_app_users();
         $options  = [];
         if( is_array( $all_user ) ){
@@ -110,7 +117,17 @@ class Tasty_User_Report{
                 }
             }
         }
-        
+
+        return $options;
+    }
+
+    
+
+    /**
+     * Preferences Bathroom element page content
+     */
+    public function preferences_bathroom_element(){
+        $options = $this->user_dropdown();
         ?>
         <div class="wrap">
             <h1><?php _e( 'Tasty User Report', 'tasty' );?></h1>
@@ -133,6 +150,44 @@ class Tasty_User_Report{
                 </div>
                 <div class="preference-tab-content-area">
                     <div id="preference-tab-content">
+                        <p><?php _e( 'Loading...', 'tasty' );?></p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <?php
+    }
+
+    /**
+     * Tag performance indicator page
+     */
+    public function tag_performance_indicators(){
+        $options = $this->user_dropdown();
+        ?>
+        <div class="wrap">
+            <h1><?php _e( 'Tag Performance Indicators', 'tasty' );?></h1>
+            <div class="user-dropdown-area">
+                <label for="preference-user"><?php _e( 'Performance By User:' ); ?></label>
+                <select name="perform-user" id="perform-user">
+                    <?php
+                        foreach( $options as $option ){
+                            printf( '<option value="%s">%s</option>', $option['user'], $option['email'] );
+                        }
+                    ?>
+                </select>
+            </div>
+            <div class="preference-tab-area">
+                <div class="preference-tab-btn-area">
+                    <button class="performance-tab-btn active-element" data-perform="popularity"><?php _e( 'Tag Popularity', 'tasty' );?></button>
+                    <button class="performance-tab-btn" data-perform="relevance"><?php _e( 'Tag Relevance', 'tasty' );?></button>
+                    <button class="performance-tab-btn" data-perform="likelihood"><?php _e( 'Attribute Likelihood', 'tasty' );?></button>
+                    <button class="performance-tab-btn" data-perform="avoidance"><?php _e( 'Avoidance Rate', 'tasty' );?></button>
+                    <button class="performance-tab-btn" data-perform="top_tag_element"><?php _e( 'Top Tags by Element', 'tasty' );?></button>
+                    <button class="performance-tab-btn" data-perform="interaction_depth"><?php _e( 'Interaction Depth', 'tasty' );?></button>
+                </div>
+                <div class="preference-tab-content-area">
+                    <div id="performance-tab-content">
                         <p><?php _e( 'Loading...', 'tasty' );?></p>
                     </div>
                 </div>

@@ -103,7 +103,29 @@ class Tasty_Helper{
                 $user_id
              ) );
         }
+    }
 
-
+    /**
+     * Get User info
+     */
+    public static function get_user_info( $user_info ) {
+        // Check if the input matches wp_user_[number]
+        if (preg_match('/^wp_user_(\d+)$/', $user_info, $matches)) {
+            return [
+                'column' => 'user_id',
+                'user_id' => $matches[1]
+            ];
+        }
+    
+        // Check if the input matches app__user_[number]
+        if (preg_match('/^app_user_(\d+)$/', $user_info, $matches)) {
+            return [
+                'column' => 'app_user_id',
+                'user_id' => $matches[1]
+            ];
+        }
+    
+        // If no match, return null
+        return null;
     }
 }

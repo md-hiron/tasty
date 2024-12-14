@@ -361,4 +361,7 @@ class Tasty_Taxonomies{
         register_taxonomy( 'functionality', 'post', $args );
     }
 
+    
+    
+
 }

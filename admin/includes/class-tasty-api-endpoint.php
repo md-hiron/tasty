@@ -111,6 +111,25 @@ class Tasty_API_Endpoint{
             }
         ) );
 
+        //Get all user choices
+        register_rest_route( 'tasty/v1', 'get_tag_performance', array(
+            'methods'  => 'GET',
+            'callback' => array( $this, 'get_tag_performance' ),
+            'args'     => array(
+                'user'   => array(
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field'
+                ),
+                'perform'   => array(
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field'
+                )
+            ),
+            'permission_callback' => function( $request ){
+                return current_user_can('manage_options');
+            }
+        ) );
+
         
     }
 

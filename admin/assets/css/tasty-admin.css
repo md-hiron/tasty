@@ -75,7 +75,7 @@ table.tasty-user-report-table tbody tr:nth-child(odd) {
     background: #fff;
 }
 
-button.preference-tab-btn {
+.preference-tab-btn-area button {
     display: block;
     padding: 10px;
     width: 100%;
@@ -87,11 +87,11 @@ button.preference-tab-btn {
     cursor: pointer;
 }
 
-button.preference-tab-btn.active-element{
+.preference-tab-btn-area button.active-element{
     background: #fff;
 }
 
-button.preference-tab-btn:last-child {
+.preference-tab-btn-area button:last-child {
     border-bottom: 1px solid #e9e9e9;
 }
 
