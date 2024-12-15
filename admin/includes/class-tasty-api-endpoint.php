@@ -26,7 +26,7 @@ class Tasty_API_Endpoint{
     /**
      * connecting traits
      */
-    use Get_Tasty_Posts, Save_User_Choice, Get_All_User_Report;
+    use Get_Tasty_Posts, Save_User_Choice, Get_All_User_Report, Get_Tag_Performance;
 
     /**
      * Register rest route for tatsy
@@ -117,11 +117,11 @@ class Tasty_API_Endpoint{
             'callback' => array( $this, 'get_tag_performance' ),
             'args'     => array(
                 'user'   => array(
-                    'required' => true,
+                    'required' => false,
                     'sanitize_callback' => 'sanitize_text_field'
                 ),
                 'perform'   => array(
-                    'required' => true,
+                    'required' => false,
                     'sanitize_callback' => 'sanitize_text_field'
                 )
             ),

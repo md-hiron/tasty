@@ -83,6 +83,7 @@ class Tasty_Admin{
         require_once TASTY_ADMIN_DIR . 'traits/trait-get-tasty-posts.php';
         require_once TASTY_ADMIN_DIR . 'traits/trait-save-user-choice.php';
         require_once TASTY_ADMIN_DIR . 'traits/trait-get-all-user-report.php';
+        require_once TASTY_ADMIN_DIR . 'traits/trait-get-tag-performance.php';
 
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-taxonomy.php';
         require_once TASTY_ADMIN_DIR . 'includes/class-tasty-custom-field.php';

@@ -1,7 +1,8 @@
 ;(function($){
-    const siteUrl            = window.location.origin;
-    const getAllUserReport    = siteUrl + '/tasty/wp-json/tasty/v1/get_all_user_report';
-    const saveChoiceEndPoint = siteUrl + '/tasty/wp-json/tasty/v1/get_choices';
+    const siteUrl              = window.location.origin;
+    const getAllUserReport     = siteUrl + '/tasty/wp-json/tasty/v1/get_all_user_report';
+    const saveChoiceEndPoint   = siteUrl + '/tasty/wp-json/tasty/v1/get_choices';
+    const tag_perform_EndPoint = siteUrl + '/tasty/wp-json/tasty/v1/get_tag_performance';
 
     async function fethcAdminApi( apiEndpoint ){
         try{
@@ -144,6 +145,13 @@
             tastyItemByElement( element, user );
         })
     }
+
+    /**
+     * Test api
+     */
+    fethcAdminApi( tag_perform_EndPoint ).then( data => {
+        console.log(data);
+    } )
 
 
     //Fetch all user report
