@@ -24,7 +24,8 @@ if( ! defined( 'WPINC' ) ){
 class Tasty_API_Endpoint{
 
     /**
-     * connecting traits
+     * Connecting traits
+     * All api callback functions are comming from this trait
      */
     use Get_Tasty_Posts, Save_User_Choice, Get_All_User_Report, Get_Tag_Performance;
 
@@ -35,6 +36,8 @@ class Tasty_API_Endpoint{
      * @access  public
      */
     public function register_tasty_route(){
+        
+        // get tasty post with recommendation
         register_rest_route( 'tasty/v1', 'get-tasty-posts', array(
             'methods'             => 'GET',
             'callback'            => array( $this, 'get_tasty_posts' ) ,
@@ -57,6 +60,7 @@ class Tasty_API_Endpoint{
             'permission_callback' => '__return_true'
         ) );
 
+        // Save choice when user swip
         register_rest_route( 'tasty/v1', 'save_choices', array(
             'methods'  => 'POST',
             'callback' => array( $this, 'save_user_choices' ),
@@ -128,11 +132,7 @@ class Tasty_API_Endpoint{
             'permission_callback' => function( $request ){
                 return current_user_can('manage_options');
             }
-        ) );
-
-        
+        ) );   
     }
-
-    
 
 }

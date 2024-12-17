@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This trati is responsible for getting all user report of tasty
+ * This trati is responsible for getting all user tag performance report
  * This trait is connected with Tasty_API_Endpoint class in admin/includes/class-tasty-api-endpoint.php
  *
  * @since      1.0.0
@@ -16,7 +16,7 @@ if( ! defined( 'WPINC' ) ){
 }
 
 /**
- * Get all user reports
+ * Get Tag Performance
  *
  * @package    Tasty
  * @subpackage Tasty/admin
@@ -89,6 +89,12 @@ trait Get_Tag_Performance{
 
     /**
      * Get popular tags
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_popular_tags( $user_id, $column ){
 
@@ -123,6 +129,12 @@ trait Get_Tag_Performance{
 
     /**
      * get tag relevance
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_tag_relevance( $user_id, $column ){
         global $wpdb;
@@ -147,6 +159,12 @@ trait Get_Tag_Performance{
 
     /**
      * Get Likelihood
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_likelihood( $user_id, $column ){
 
@@ -180,6 +198,12 @@ trait Get_Tag_Performance{
 
     /**
      * Get avoidence rates
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_avoidance_rate( $user_id, $column ){
 
@@ -213,7 +237,13 @@ trait Get_Tag_Performance{
 
 
     /**
-     * Get avoidence rates
+     * Get Top tags
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_top_tags( $user_id, $column ){
 
@@ -244,7 +274,13 @@ trait Get_Tag_Performance{
     }
 
     /**
-     * Get avoidence rates
+     * Get Interation Depth
+     * 
+     * @param   int     $user_id    Tasty user id can be app user or wp user
+     * @param   string  $column     Colunm name of user or app user
+     * 
+     * @since   1.0.0  
+     * @access  public
      */
     public function get_interaction_depth( $user_id, $column ){
 

@@ -18,6 +18,8 @@ let moveY = 0;
 const swipedIds = [];
 const loadedIds = [];
 
+let isFetchingMoreData = false; // Flag to prevent multiple fetches
+
 // Initialize the system
 function initSwipeCards() {
     const likeButton = document.querySelector(likeButtonSelector);
@@ -25,16 +27,21 @@ function initSwipeCards() {
 
     fetchInitialData()
         .then(fetchedData => {
-            data = fetchedData;
-            data.forEach(item => {
-                appendCard(item)
-                loadedIds.push(item.id);
-            });
-
-            // Set the initial card
-            current = frame.querySelector('.card:last-child');
-            likeText = current?.children[0];
-            attachCardEventListeners(current);
+            if( fetchedData.length > 0 ){
+                data = fetchedData;
+                data.forEach(item => {
+                    appendCard(item)
+                    loadedIds.push(item.id);
+                });
+    
+                // Set the initial card
+                current = frame.querySelector('.card:last-child');
+                likeText = current?.children[0];
+                attachCardEventListeners(current);
+            }else{
+                setButtonsDisabled(true)
+            }
+            
         })
         .catch(error => console.error('Error loading initial data:', error));
 
@@ -169,11 +176,15 @@ function completeAction( action, isButtonClick = false ) {
     } else {
         current = null;
         likeText = null;
+
+        // Prevent premature display of "no cards" message
+        if (!isFetchingMoreData) {
+            displayNoMoreCardsMessage(); // Will only show if no fetch is pending
+        }
     }
 
     setTimeout(() => {
         frame.removeChild(prev);
-        if (!current) displayNoMoreCardsMessage();
     }, 300);
 }
 
@@ -204,7 +215,9 @@ async function saveChoiceToDatabase( postID, action ){
 }
 
 async function fetchMoreData(swipedIds){
-   //appendLoadingCard();
+    if (isFetchingMoreData) return; // Prevent multiple fetches
+    isFetchingMoreData = true;
+    appendLoadingCard();
     try{
         const response = await fetch( getPostEndPoint+`?swiped_ids=${swipedIds}&loaded_ids=${loadedIds}`, {
             'method': 'GET',
@@ -219,17 +232,38 @@ async function fetchMoreData(swipedIds){
             throw new Error('Failded to fetch more posts');
         }
 
+        removeLoadingCard(); // Remove loading indicator
+
         const newPosts = await response.json();
 
-        newPosts.forEach( item => {
-            loadedIds.push(item.id);
-            appendCard(item);
-        } );
-        data.push(...newPosts);
+        if (newPosts.length > 0) {
+            newPosts.forEach( item => {
+                loadedIds.push(item.id);
+                appendCard(item);
+            } );
+            
+            data.push(...newPosts);
 
-       
+            current = frame.querySelector('.card:last-child');
+            likeText = current?.children[0];
+            attachCardEventListeners(current);
+
+            isFetchingMoreData = false;
+        }else{
+            isFetchingMoreData = false;
+
+            // Show "No More Cards" only if no cards are left
+            if (!current && frame.children.length === 0) {
+                //displayNoMoreCardsMessage();
+                appendPlaceholderCard( 'Für den aktuellen Benutzer sind keine Beiträge verfügbar' );
+                //setButtonsDisabled(true);
+            }
+        }
         
     }catch( error ){
+        removeLoadingCard();
+        isFetchingMoreData = false;
+
         throw new Error( error );
     }
 }
@@ -244,6 +278,7 @@ function cancelAction() {
 
 // Like button handler
 function likeHandler(action) {
+    console.log( likeText );
     likeText.style.opacity = 1
     likeText.className = 'is-like like'
     setTimeout( function(){

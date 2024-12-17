@@ -169,7 +169,7 @@
             }
 
             fethcAdminApi( tag_perform_EndPoint + param ).then( data => {
-                perform_tab_content.innerHTML = popularityContentHtml(data);
+                perform_tab_content.innerHTML = tagPerformanceHtml(data);
             } );
         }
     }
@@ -216,8 +216,6 @@
             return;
         }
 
-        console.log(tableHeads)
-
         let html = '<tr>';
 
         tableHeads.forEach( head => {
@@ -233,21 +231,21 @@
     /**
      * Popularity html
      */
-    function popularityContentHtml( popularityData ){
-        if( ! Array.isArray( popularityData ) ){
+    function tagPerformanceHtml( tagPerformData ){
+        if( ! Array.isArray( tagPerformData ) ){
             return;
         }
 
-        if( popularityData.length === 0 ){
+        if( tagPerformData.length === 0 ){
             return '<h3>No data found</h3>';
         }
 
-        const heads = Object.keys(popularityData[0]);
+        const heads = Object.keys(tagPerformData[0]);
 
         let html = '<table class="tasty-user-report-table">';
-        html += performTableHead( Object.keys(popularityData[0]) );
+        html += performTableHead( Object.keys(tagPerformData[0]) );
 
-        popularityData.forEach( data => {
+        tagPerformData.forEach( data => {
             html += '<tr>';
             heads.forEach( head => {
                 html += `<td>${data[head]}</td>`;
