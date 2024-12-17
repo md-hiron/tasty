@@ -161,10 +161,9 @@ function completeAction( action, isButtonClick = false ) {
 
     
     if( swipedIds.length === 3 ){
-        console.log(loadedIds);
+
         fetchMoreData(swipedIds)
         swipedIds.length = 0;
-
     }
 
     saveChoiceToDatabase( postId, action );
@@ -172,26 +171,24 @@ function completeAction( action, isButtonClick = false ) {
     if (next) {
         attachCardEventListeners(next);
         current = next;
-        likeText = current.children[0];
+        likeText = current?.querySelector('.is-like');
     } else {
         current = null;
         likeText = null;
-
-        // Prevent premature display of "no cards" message
         if (!isFetchingMoreData) {
-            displayNoMoreCardsMessage(); // Will only show if no fetch is pending
+           // displayNoMoreCardsMessage(); // Will only show if no fetch is pending
+            appendPlaceholderCard( 'Für den aktuellen Benutzer sind keine Beiträge verfügbar' );
         }
     }
 
     setTimeout(() => {
-        frame.removeChild(prev);
+        if (frame.contains(prev)) frame.removeChild(prev);
     }, 300);
 }
 
 //save user choice in database
 async function saveChoiceToDatabase( postID, action ){
-    console.log({ post_id: postID, choice: action });
-    console.log('nonce '+wpApiSettings.nonce);
+
     try{
         const response = await fetch( saveChoiceEndPoint, {
             method: 'POST',
@@ -208,7 +205,6 @@ async function saveChoiceToDatabase( postID, action ){
         }
 
         const result = await response.json();
-        console.log(result);
     }catch( error ){
         throw new Error( error );
     }
@@ -245,7 +241,7 @@ async function fetchMoreData(swipedIds){
             data.push(...newPosts);
 
             current = frame.querySelector('.card:last-child');
-            likeText = current?.children[0];
+            likeText = current?.querySelector('.is-like');
             attachCardEventListeners(current);
 
             isFetchingMoreData = false;
@@ -285,7 +281,7 @@ function likeHandler(action) {
         moveX = 1;
         moveY = 0;
         completeAction( action, true ); 
-    }, 300)
+    }, 150)
 }
 
 // Hate button handler
@@ -297,14 +293,14 @@ function hateHandler(action) {
         moveX = -1
         moveY = 0
         completeAction( action, true ); 
-    }, 300)
+    }, 150)
 
 }
 
 // Display "No More Cards" message
 function displayNoMoreCardsMessage() {
     const message = document.createElement('div');
-    message.className = 'card no-more-cards';
+    message.className = 'notice-card no-more-cards';
     message.innerHTML = '<div class="no-more-item">Keine weiteren Karten vorhanden</div>';
     frame.appendChild(message);
 }
@@ -312,7 +308,7 @@ function displayNoMoreCardsMessage() {
 // Append a placeholder card to the frame
 function appendPlaceholderCard(message) {
     const placeholderCard = document.createElement('div');
-    placeholderCard.className = 'card placeholder-card';
+    placeholderCard.className = 'notice-card placeholder-card';
     placeholderCard.innerHTML = `
         <div class="no-more-item">${message}</div>
     `;
