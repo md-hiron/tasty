@@ -149,9 +149,116 @@
     /**
      * Test api
      */
-    fethcAdminApi( tag_perform_EndPoint ).then( data => {
-        console.log(data);
-    } )
+    const performBtn   = document.querySelectorAll('.performance-tab-btn');
+    const performUser  = document.getElementById('perform-user');
+    //initail element
+    let perform      = 'popularity';
+    let performUserId = null;
+
+    function tastyPerformanceIndicator( perform, user = null ){
+        const perform_tab_content = document.getElementById( 'performance-tab-content' );
+
+        if( perform_tab_content ){
+
+            perform_tab_content.innerHTML = 'Loading....';
+
+            let param = `?perform=${perform}`;
+
+            if( user ){
+                param += `&user=${user}`;
+            }
+
+            fethcAdminApi( tag_perform_EndPoint + param ).then( data => {
+                perform_tab_content.innerHTML = popularityContentHtml(data);
+            } );
+        }
+    }
+
+    //initially run performance idicators
+    tastyPerformanceIndicator(perform);
+
+    if( performBtn ){
+        performBtn.forEach( perform => {
+            
+            perform.addEventListener( 'click', function(){
+                if( ! this.classList.contains("active-element") ){
+                    perform = this.getAttribute('data-perform');
+                    tastyPerformanceIndicator( perform, performUserId );
+    
+                    //active button functioinality
+                    performBtn.forEach( btn => {
+                        btn.classList.remove('active-element')
+                    } );
+    
+                    this.classList.add('active-element');
+                    
+                }
+
+            } )
+        
+        } )
+    }
+      
+    //Update api on dropdown change
+    if( performUser ){
+        performUser.addEventListener('change', function(){
+            performUserId = this.value
+            tastyPerformanceIndicator( perform, performUserId );
+        })
+    }
+      
+
+    /**
+     * Peform table head
+     */
+    function performTableHead( tableHeads ){
+        if( ! Array.isArray(tableHeads) ){
+            return;
+        }
+
+        console.log(tableHeads)
+
+        let html = '<tr>';
+
+        tableHeads.forEach( head => {
+           let head_text = head.replace(/_/g, ' ');
+            html += `<th>${head_text.charAt(0).toUpperCase() + head_text.slice(1).toLowerCase()}</th>`;
+        } );
+
+        html += '</tr>';
+
+        return html;
+    }
+
+    /**
+     * Popularity html
+     */
+    function popularityContentHtml( popularityData ){
+        if( ! Array.isArray( popularityData ) ){
+            return;
+        }
+
+        if( popularityData.length === 0 ){
+            return '<h3>No data found</h3>';
+        }
+
+        const heads = Object.keys(popularityData[0]);
+
+        let html = '<table class="tasty-user-report-table">';
+        html += performTableHead( Object.keys(popularityData[0]) );
+
+        popularityData.forEach( data => {
+            html += '<tr>';
+            heads.forEach( head => {
+                html += `<td>${data[head]}</td>`;
+            } );
+            html += '</tr>'
+        } );
+
+        html += '</table>';
+
+        return html;
+    }
 
 
     //Fetch all user report

@@ -41,10 +41,22 @@ trait Get_Tag_Performance{
         $perform   = !empty( $request['perform'] ) ? $request['perform'] : 'popularity';
 
         switch ( $perform ){
+            case 'popularity' :
+                $popularity = $this->get_popular_tags( $user_id, $column );
+
+                return new WP_REST_Response( $popularity, 200 );
+
+                break;
             case 'relevance' :
                 $relevance = $this->get_tag_relevance( $user_id, $column );
 
                 return new WP_REST_Response( $relevance, 200 );
+
+                break;
+            case 'likelihood' :
+                $likelihood = $this->get_likelihood( $user_id, $column );
+
+                return new WP_REST_Response( $likelihood, 200 );
 
                 break;
             case 'avoidance' :
@@ -90,19 +102,19 @@ trait Get_Tag_Performance{
 
         $query = "
             SELECT 
-            tt.term_id,
-            term.name,
-            tt.taxonomy,
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
+            name as tag,
             count(*) as total_interactions,
             SUM( CASE WHEN choice = 'like' THEN 1 ELSE 0 END) AS likes,
             SUM( CASE WHEN choice = 'dislike' THEN 1 ELSE 0 END ) as dislikes,
-            ( SUM( CASE WHEN choice = 'like' THEN 1 ELSE 0 END) / COUNT(*) ) * 100 AS popularity_percentage
+            CONCAT(FORMAT((SUM(CASE WHEN choice = 'like' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2), '%') AS popularity_percentage
             FROM $user_choice uc
             INNER JOIN $term_relation tr ON uc.post_id = tr.object_id
             INNER JOIN $term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
             INNER JOIN $terms terms ON tt.term_taxonomy_id = terms.term_id
-            WHERE $column = %d
-            GROUP BY tt.term_id, tt.taxonomy, terms.name
+            WHERE $column = %d AND tt.taxonomy != 'category'
+            GROUP BY terms.name, tt.taxonomy
             ORDER BY popularity_percentage DESC 
         ";
 
@@ -116,15 +128,54 @@ trait Get_Tag_Performance{
         global $wpdb;
         $wpdb_prefix   = $wpdb->prefix;
         $tag_wieght    = $wpdb_prefix . 'tag_weight';
+        $terms         = $wpdb_prefix . 'terms';
 
 
         return $wpdb->get_results( $wpdb->prepare(
-            "SELECT tag_id, taxonomy
-            FROM $tag_wieght
+            "SELECT 
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
+            name as tag,
+            tag_weight_score
+            FROM $tag_wieght tw
+            INNER JOIN $terms terms ON tw.tag_id = terms.term_id
             where $column = %d
             ORDER BY tag_weight_score DESC",
             $user_id
         ) );
+    }
+
+    /**
+     * Get Likelihood
+     */
+    public function get_likelihood( $user_id, $column ){
+
+        global $wpdb;
+        $wpdb_prefix   = $wpdb->prefix;
+        $user_choice   = $wpdb_prefix . 'user_choices';
+        $term_relation = $wpdb_prefix . 'term_relationships';
+        $term_taxonomy = $wpdb_prefix . 'term_taxonomy';
+        $terms         = $wpdb_prefix . 'terms';
+         
+
+        $query = "
+            SELECT 
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
+            name as tag,
+            count(*) as total_interactions,
+            SUM( CASE WHEN choice = 'like' THEN 1 ELSE 0 END) AS likes,
+            CONCAT(FORMAT((SUM(CASE WHEN choice = 'like' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2), '%') AS likelihood_percentage
+            FROM $user_choice uc
+            INNER JOIN $term_relation tr ON uc.post_id = tr.object_id
+            INNER JOIN $term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+            INNER JOIN $terms terms ON tt.term_taxonomy_id = terms.term_id
+            WHERE $column = %d AND tt.taxonomy != 'category'
+            GROUP BY terms.name, tt.taxonomy
+            ORDER BY likelihood_percentage DESC 
+        ";
+
+        return $wpdb->get_results( $wpdb->prepare( $query, $user_id ) );
     }
 
     /**
@@ -137,19 +188,22 @@ trait Get_Tag_Performance{
         $user_choice   = $wpdb_prefix . 'user_choices';
         $term_relation = $wpdb_prefix . 'term_relationships';
         $term_taxonomy = $wpdb_prefix . 'term_taxonomy';
+        $terms         = $wpdb_prefix . 'terms';
          
 
         $query = "
             SELECT 
-            tt.term_id,
-            tt.taxonomy,
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
+            name as tag,
             count(*) as total_interactions,
             SUM( CASE WHEN choice = 'dislike' THEN 1 ELSE 0 END ) as dislikes,
-            ( SUM( CASE WHEN choice = 'dislike' THEN 1 ELSE 0 END) / COUNT(*) ) * 100 AS avoidance_rate
+            CONCAT(FORMAT((SUM(CASE WHEN choice = 'dislike' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2), '%') AS avoidance_rate
             FROM $user_choice uc
             INNER JOIN $term_relation tr ON uc.post_id = tr.object_id
             INNER JOIN $term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            WHERE $column = %d
+            INNER JOIN $terms terms ON tt.term_taxonomy_id = terms.term_id
+            WHERE $column = %d AND  tt.taxonomy != 'category'
             GROUP BY tt.term_id, tt.taxonomy
             ORDER BY avoidance_rate DESC 
         ";
@@ -168,17 +222,20 @@ trait Get_Tag_Performance{
         $user_choice   = $wpdb_prefix . 'user_choices';
         $term_relation = $wpdb_prefix . 'term_relationships';
         $term_taxonomy = $wpdb_prefix . 'term_taxonomy';
+        $terms         = $wpdb_prefix . 'terms';
          
 
         $query = "
             SELECT 
-            tt.term_id,
-            tt.taxonomy,
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
+            name as tag,
             count(*) as total_likes
             FROM $user_choice uc
             INNER JOIN $term_relation tr ON uc.post_id = tr.object_id
             INNER JOIN $term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            WHERE $column = %d AND choice = 'like'
+            INNER JOIN $terms terms ON tt.term_taxonomy_id = terms.term_id
+            WHERE $column = %d AND choice = 'like' AND  tt.taxonomy != 'category'
             GROUP BY tt.term_id, tt.taxonomy
             ORDER BY tt.taxonomy ASC, total_likes DESC
         ";
@@ -200,12 +257,13 @@ trait Get_Tag_Performance{
 
         $query = "
             SELECT 
-            tt.taxonomy,
+            CONCAT(UCASE(LEFT(REPLACE(taxonomy, '-', ' '), 1)), 
+            LOWER(SUBSTRING(REPLACE(taxonomy, '-', ' '), 2))) AS tag_type,
             count(*) as total_interaction
             FROM $user_choice uc
             INNER JOIN $term_relation tr ON uc.post_id = tr.object_id
             INNER JOIN $term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-            WHERE $column = %d
+            WHERE $column = %d AND tt.taxonomy != 'category'
             GROUP BY tt.term_id, tt.taxonomy
             ORDER BY total_interaction DESC
         ";
