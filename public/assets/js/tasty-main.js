@@ -162,24 +162,31 @@ function completeAction( action, isButtonClick = false ) {
     
     if( swipedIds.length === 3 ){
 
-        fetchMoreData(swipedIds)
+        fetchMoreData(swipedIds).then( function(){
+            const newNext = frame.querySelector('.card:last-child');
+            if (newNext) {
+                attachCardEventListeners(newNext);
+                current = newNext;
+                likeText = current?.querySelector('.is-like');
+            } else {
+                current = null;
+                likeText = null;
+            }
+        } )
         swipedIds.length = 0;
-    }
-
-    saveChoiceToDatabase( postId, action );
-
-    if (next) {
+    }else if(next){
         attachCardEventListeners(next);
         current = next;
         likeText = current?.querySelector('.is-like');
-    } else {
+    }else{
         current = null;
         likeText = null;
         if (!isFetchingMoreData) {
-           // displayNoMoreCardsMessage(); // Will only show if no fetch is pending
-            appendPlaceholderCard( 'Für den aktuellen Benutzer sind keine Beiträge verfügbar' );
+            appendPlaceholderCard('Für den aktuellen Benutzer sind keine Beiträge verfügbar');
         }
     }
+
+    saveChoiceToDatabase( postId, action );
 
     setTimeout(() => {
         if (frame.contains(prev)) frame.removeChild(prev);
@@ -204,7 +211,7 @@ async function saveChoiceToDatabase( postID, action ){
             throw new Error( 'Failed to save user choice to database' );
         }
 
-        const result = await response.json();
+        //const result = await response.json();
     }catch( error ){
         throw new Error( error );
     }
@@ -231,6 +238,7 @@ async function fetchMoreData(swipedIds){
         removeLoadingCard(); // Remove loading indicator
 
         const newPosts = await response.json();
+        console.log(newPosts)
 
         if (newPosts.length > 0) {
             newPosts.forEach( item => {
@@ -243,17 +251,6 @@ async function fetchMoreData(swipedIds){
             current = frame.querySelector('.card:last-child');
             likeText = current?.querySelector('.is-like');
             attachCardEventListeners(current);
-
-            isFetchingMoreData = false;
-        }else{
-            isFetchingMoreData = false;
-
-            // Show "No More Cards" only if no cards are left
-            if (!current && frame.children.length === 0) {
-                //displayNoMoreCardsMessage();
-                appendPlaceholderCard( 'Für den aktuellen Benutzer sind keine Beiträge verfügbar' );
-                //setButtonsDisabled(true);
-            }
         }
         
     }catch( error ){
@@ -261,6 +258,9 @@ async function fetchMoreData(swipedIds){
         isFetchingMoreData = false;
 
         throw new Error( error );
+    }finally{
+        removeLoadingCard();
+        isFetchingMoreData = false;
     }
 }
 
