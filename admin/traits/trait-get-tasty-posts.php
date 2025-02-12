@@ -68,10 +68,6 @@ trait Get_Tasty_Posts{
             }
         }
 
-        
-
-        
-        
         // Fetch swiped posts for the user
         $column_name       = $user_id ? 'user_id' : 'app_user_id';
         $user_identifier   = $user_id ?: $app_user_id;
@@ -87,8 +83,6 @@ trait Get_Tasty_Posts{
         //Post per page and order based on user action
         $posts_per_page = $swiped_ids ? 3 : 5;
         $orderby = $swiped_ids ? 'date' : 'rand';
-
-        
         
         $primary_args = array(
             'post_type'      => 'post',
@@ -126,9 +120,7 @@ trait Get_Tasty_Posts{
             );
 
             $fallback_query = new WP_Query( $fallback_args );
-
             $ranked_posts = array_merge( $ranked_posts, $fallback_query->posts );
-
         }
 
         // Prepare response
@@ -145,14 +137,14 @@ trait Get_Tasty_Posts{
             }, $ranked_posts );
         }
         
-        return new WP_REST_Response( $posts, 200 );
-        
+        return new WP_REST_Response( $posts, 200 );  
     }
 
     /**
      * Get tasty tex query
      * This is one of the main method that work for recommendation. This tax query first try to get heighest tag weight score
      * if it doesn't found any then it will try to get data by user liked taxonomies. Dislike tags wil be always added if there is disliked terms
+     * 
      * 
      * 
      */
